@@ -3,107 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الدكتور</title>
+    <title>لوحة الدكتور</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
-    <!-- شاشة تسجيل دخول الدكتور -->
+    <!-- تسجيل الدخول -->
     <div id="doctor-login-screen" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-900">تسجيل دخول الدكتور</h2>
-                <p class="text-xs text-slate-500 mt-1">أدخل بيانات الحساب التي أنشأها المشرف</p>
-            </div>
-            <form onsubmit="handleDoctorLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">اسم المستخدم</label>
-                    <input type="text" id="doc-login-user" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-teal-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
-                    <input type="password" id="doc-login-pass" required class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-teal-500">
-                </div>
-                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 rounded-lg transition">دخول</button>
+        <div class="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl">
+            <h2 class="text-base font-bold text-slate-800 mb-3 text-center">دخول الدكتور</h2>
+            <form onsubmit="handleDoctorLogin(event)" class="space-y-3">
+                <input type="text" id="doc-login-user" required placeholder="اسم المستخدم" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                <input type="password" id="doc-login-pass" required placeholder="كلمة المرور" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-xl text-sm">دخول</button>
             </form>
         </div>
     </div>
 
-    <!-- لوحة تحكم الدكتور الرئيسية -->
-    <div id="doctor-dashboard" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <!-- الشاشة الرئيسية -->
+    <div id="doctor-dashboard" class="hidden max-w-md mx-auto px-4 pt-4 space-y-4">
+        <div class="flex justify-between items-center bg-white p-3 rounded-xl border">
             <div>
-                <h1 id="doc-welcome-name" class="text-xl font-bold text-teal-800">أهلاً بك الدكتور</h1>
-                <p id="doc-dept-label" class="text-xs text-slate-500"></p>
+                <h1 id="doc-welcome-name" class="font-bold text-sm text-teal-800">أهلاً دكتور</h1>
+                <p id="doc-dept-label" class="text-[10px] text-slate-400"></p>
             </div>
-            <button onclick="logoutDoctor()" class="text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm font-semibold transition">تسجيل خروج</button>
-        </header>
+            <button onclick="logoutDoctor()" class="text-rose-600 text-xs font-bold">خروج</button>
+        </div>
 
-        <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full space-y-8">
-            <!-- التحكم بحالة الدكتور والعيادة -->
-            <section class="bg-white p-6 rounded-2xl shadow-sm">
-                <h3 class="text-lg font-bold text-slate-800 mb-4 border-r-4 border-teal-600 pr-3">إعدادات العيادة والحالة</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">حالة التواجد</label>
-                        <select id="doc-presence" class="w-full px-4 py-2 border rounded-lg outline-none">
-                            <option value="true">موجود</option>
-                            <option value="false">غير موجود</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">رقم العيادة</label>
-                        <input type="text" id="doc-room" class="w-full px-4 py-2 border rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">المدة التقريبية للحالة (دقائق)</label>
-                        <input type="number" id="doc-duration" class="w-full px-4 py-2 border rounded-lg outline-none" value="20">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">الحالة الواصل لها الدكتور (رقم)</label>
-                        <input type="number" id="doc-current-case" class="w-full px-4 py-2 border rounded-lg outline-none" value="0">
-                    </div>
+        <!-- إعدادات التواجد والعيادة -->
+        <section class="bg-white p-4 rounded-xl border space-y-2 text-xs">
+            <h3 class="font-bold text-slate-700">تحديث الحالة</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">التواجد</label>
+                    <select id="doc-presence" class="w-full px-2 py-1.5 border rounded-lg">
+                        <option value="true">موجود</option>
+                        <option value="false">غير موجود</option>
+                    </select>
                 </div>
-                <button onclick="updateDoctorStatus()" class="mt-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-2 rounded-lg transition text-sm">حفظ التغييرات</button>
-            </section>
-
-            <!-- الحالات قيد الانتظار والمكتملة -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <section class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-r-4 border-teal-600 pr-3">الحالات قيد الانتظار</h3>
-                    <div id="doc-pending-cases" class="space-y-3"></div>
-                </section>
-                <section class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-r-4 border-teal-600 pr-3">الحالات المكتملة</h3>
-                    <div id="doc-completed-cases" class="space-y-3"></div>
-                </section>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">رقم العيادة</label>
+                    <input type="text" id="doc-room" class="w-full px-2 py-1.5 border rounded-lg">
+                </div>
             </div>
-        </main>
-    </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">مدة الحالة (دقائق)</label>
+                    <input type="number" id="doc-duration" class="w-full px-2 py-1.5 border rounded-lg" value="20">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">الحالة الواصل لها</label>
+                    <input type="number" id="doc-current-case" class="w-full px-2 py-1.5 border rounded-lg" value="0">
+                </div>
+            </div>
+            <button onclick="updateDoctorStatus()" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg mt-2">حفظ التغييرات</button>
+        </section>
 
-    <footer class="bg-white border-t mt-12 py-4 text-center text-xs text-slate-500">
-        <p>بوابة الدكتور - نظام العيادات الطبية</p>
-    </footer>
+        <!-- قائمة الحالات -->
+        <section class="bg-white p-4 rounded-xl border space-y-3">
+            <h3 class="text-xs font-bold text-slate-700">الحالات قيد الانتظار</h3>
+            <div id="doc-pending-cases" class="space-y-2"></div>
+        </section>
+
+        <section class="bg-white p-4 rounded-xl border space-y-3">
+            <h3 class="text-xs font-bold text-slate-700">الحالات المكتملة</h3>
+            <div id="doc-completed-cases" class="space-y-2"></div>
+        </section>
+    </div>
 
     <script>
         let currentDoctorUsername = '';
 
         function handleDoctorLogin(e) {
             e.preventDefault();
-            const username = document.getElementById('doc-login-user').value;
+            const user = document.getElementById('doc-login-user').value;
             const pass = document.getElementById('doc-login-pass').value;
 
             const doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            const doc = doctors.find(d => d.username === username && d.password === pass);
+            const doc = doctors.find(d => d.username === user && d.password === pass);
 
             if(doc) {
-                currentDoctorUsername = username;
+                currentDoctorUsername = user;
                 document.getElementById('doctor-login-screen').classList.add('hidden');
                 document.getElementById('doctor-dashboard').classList.remove('hidden');
                 loadDoctorData();
             } else {
-                alert('اسم المستخدم أو كلمة المرور غير صحيحة');
+                alert('البيانات غير صحيحة');
             }
         }
 
@@ -118,13 +104,12 @@
             const doc = doctors.find(d => d.username === currentDoctorUsername);
 
             if(doc) {
-                document.getElementById('doc-welcome-name').innerText = `أهلاً بك الدكتور ${doc.name}`;
-                document.getElementById('doc-dept-label').innerText = `القسم: ${doc.department}`;
+                document.getElementById('doc-welcome-name').innerText = `د. ${doc.name}`;
+                document.getElementById('doc-dept-label').innerText = doc.department;
                 document.getElementById('doc-presence').value = doc.isPresent ? "true" : "false";
                 document.getElementById('doc-room').value = doc.roomNumber || '1';
                 document.getElementById('doc-duration').value = doc.duration || 20;
                 document.getElementById('doc-current-case').value = doc.currentCase || 0;
-
                 renderDoctorCases();
             }
         }
@@ -139,7 +124,7 @@
             doctors = doctors.map(d => d.username === currentDoctorUsername ? { ...d, isPresent, roomNumber, duration, currentCase } : d);
             localStorage.setItem('clinic_doctors', JSON.stringify(doctors));
 
-            alert('تم تحديث البيانات بنجاح');
+            alert('تم التحديث');
             loadDoctorData();
         }
 
@@ -152,24 +137,24 @@
             const docCompleted = bookings.filter(b => b.doctorUsername === currentDoctorUsername && b.status === 'مكتملة');
 
             pendingDiv.innerHTML = docPending.length ? docPending.map(b => `
-                <div class="p-3 bg-slate-50 border rounded-lg flex justify-between items-center text-sm">
+                <div class="p-2.5 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
                     <div>
-                        <p class="font-bold">${b.patientName} <span class="text-teal-600 text-xs">رقم الدور: ${b.queueNumber}</span></p>
-                        <p class="text-xs text-slate-500">هاتف: ${b.patientPhone} | العمر: ${b.age}</p>
+                        <p class="font-bold">${b.patientName} <span class="text-teal-600">(دور: ${b.queueNumber})</span></p>
+                        <p class="text-[10px] text-slate-400">هاتف: ${b.patientPhone}</p>
                     </div>
-                    <button onclick="markAsCompleted('${b.id}')" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">جعل مكتملة</button>
+                    <button onclick="markAsCompleted('${b.id}')" class="bg-teal-600 text-white font-bold px-2.5 py-1 rounded-md text-[10px]">مكتملة</button>
                 </div>
-            `).join('') : '<p class="text-xs text-slate-400">لا توجد حالات في الانتظار</p>';
+            `).join('') : '<p class="text-[10px] text-slate-400">لا توجد حالات</p>';
 
             completedDiv.innerHTML = docCompleted.length ? docCompleted.map(b => `
-                <div class="p-3 bg-slate-50 border rounded-lg flex justify-between items-center text-sm">
+                <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
                     <div>
-                        <p class="font-bold">${b.patientName} <span class="text-slate-400 text-xs">رقم الدور: ${b.queueNumber}</span></p>
-                        <p class="text-xs text-slate-500">هاتف: ${b.patientPhone}</p>
+                        <p class="font-bold">${b.patientName}</p>
+                        <p class="text-[10px] text-slate-400">رقم الدور: ${b.queueNumber}</p>
                     </div>
-                    <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">مكتملة</span>
+                    <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">مكتملة</span>
                 </div>
-            `).join('') : '<p class="text-xs text-slate-400">لا توجد حالات مكتملة</p>';
+            `).join('') : '<p class="text-[10px] text-slate-400">لا توجد حالات مكتملة</p>';
         }
 
         function markAsCompleted(id) {
