@@ -6,6 +6,7 @@
     <title>لوحة التحكم - الإدارة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
@@ -29,7 +30,7 @@
 
         <!-- الإعدادات والشعار -->
         <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">إعدادات الموقع الشعار</h3>
+            <h3 class="text-xs font-bold text-slate-700">إعدادات الموقع والشعار</h3>
             <form onsubmit="saveSettings(event)" class="space-y-2">
                 <div>
                     <label class="block text-[11px] font-bold text-slate-600 mb-1">اسم العيادة</label>
@@ -84,6 +85,10 @@
     </div>
 
     <script>
+        const SUPABASE_URL = 'https://msfkzlgzrrwowzqswjeo.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_VrSSf2MML6_kII0uVt535w_kxtc62vQ';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let uploadedLogoBase64 = '';
 
         function handleAdminLogin(e) {
@@ -102,14 +107,16 @@
             document.getElementById('login-screen').classList.remove('hidden');
         }
 
-        function loadAdminData() {
-            const settings = JSON.parse(localStorage.getItem('clinic_settings')) || { name: 'عيادة سرت المركزية', logo: '' };
-            document.getElementById('set-name').value = settings.name;
-            if(settings.logo) {
-                uploadedLogoBase64 = settings.logo;
-                const prev = document.getElementById('logo-preview');
-                prev.src = settings.logo;
-                prev.classList.remove('hidden');
+        async function loadAdminData() {
+            const { data: settings } = await db.from('settings').select('*').single();
+            if(settings) {
+                document.getElementById('set-name').value = settings.name || '';
+                if(settings.logo) {
+                    uploadedLogoBase64 = settings.logo;
+                    const prev = document.getElementById('logo-preview');
+                    prev.src = settings.logo;
+                    prev.classList.remove('hidden');
+                }
             }
 
             document.getElementById('set-logo-file').addEventListener('change', function(e) {
@@ -126,52 +133,54 @@
                 }
             });
 
-            renderAdminDepartments();
-            renderAdminDoctors();
-            renderAdminCases();
+            await renderAdminDepartments();
+            await renderAdminDoctors();
+            await renderAdminCases();
         }
 
-        function saveSettings(e) {
+        async function saveSettings(e) {
             e.preventDefault();
             const name = document.getElementById('set-name').value;
-            localStorage.setItem('clinic_settings', JSON.stringify({ name, logo: uploadedLogoBase64 }));
-            alert('تم الحفظ');
+            await db.from('settings').upsert({ id: 1, name, logo: uploadedLogoBase64 });
+            alert('تم الحفظ في قاعدة البيانات');
         }
 
-        function saveDepartment(e) {
+        async function saveDepartment(e) {
             e.preventDefault();
             const id = document.getElementById('dept-id').value;
             const name = document.getElementById('dept-name').value;
-            let depts = JSON.parse(localStorage.getItem('clinic_departments')) || [];
 
-            if(id) depts = depts.map(d => d.id === id ? { ...d, name } : d);
-            else depts.push({ id: Date.now().toString(), name });
+            if(id) {
+                await db.from('departments').update({ name }).eq('id', id);
+            } else {
+                await db.from('departments').insert([{ name }]);
+            }
 
-            localStorage.setItem('clinic_departments', JSON.stringify(depts));
             document.getElementById('dept-name').value = '';
             document.getElementById('dept-id').value = '';
-            renderAdminDepartments();
+            await renderAdminDepartments();
         }
 
-        function renderAdminDepartments() {
-            const depts = JSON.parse(localStorage.getItem('clinic_departments')) || [];
-            document.getElementById('departments-list').innerHTML = depts.map(d => `
+        async function renderAdminDepartments() {
+            const { data: depts } = await db.from('departments').select('*');
+            document.getElementById('departments-list').innerHTML = (depts || []).map(d => `
                 <div class="flex justify-between items-center p-2 bg-slate-50 border rounded-lg text-xs">
                     <span>${d.name}</span>
                     <button onclick="deleteDepartment('${d.id}')" class="text-rose-600 font-bold">حذف</button>
                 </div>
             `).join('');
 
-            document.getElementById('doc-dept').innerHTML = depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+            document.getElementById('doc-dept').innerHTML = (depts || []).map(d => `<option value="${d.name}">${d.name}</option>`).join('');
         }
 
-        function deleteDepartment(id) {
-            let depts = JSON.parse(localStorage.getItem('clinic_departments')) || [];
-            localStorage.setItem('clinic_departments', JSON.stringify(depts.filter(d => d.id !== id)));
-            renderAdminDepartments();
+        async function deleteDepartment(id) {
+            if(confirm('هل أنت متأكد؟')) {
+                await db.from('departments').delete().eq('id', id);
+                await renderAdminDepartments();
+            }
         }
 
-        function saveDoctor(e) {
+        async function saveDoctor(e) {
             e.preventDefault();
             const id = document.getElementById('doc-id').value;
             const name = document.getElementById('doc-name').value;
@@ -179,26 +188,23 @@
             const username = document.getElementById('doc-username').value;
             const password = document.getElementById('doc-password').value;
             const days = document.getElementById('doc-days').value;
-            const timeFrom = document.getElementById('doc-from').value;
-            const timeTo = document.getElementById('doc-to').value;
-
-            let doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
+            const time_from = document.getElementById('doc-from').value;
+            const time_to = document.getElementById('doc-to').value;
 
             if(id) {
-                doctors = doctors.map(d => d.id === id ? { ...d, name, department, username, password, days, timeFrom, timeTo } : d);
+                await db.from('doctors').update({ name, department, username, password, days, time_from, time_to }).eq('id', id);
             } else {
-                doctors.push({ id: Date.now().toString(), name, department, username, password, days, timeFrom, timeTo, isPresent: false, roomNumber: '1', currentCase: 0, duration: 20 });
+                await db.from('doctors').insert([{ name, department, username, password, days, time_from, time_to }]);
             }
 
-            localStorage.setItem('clinic_doctors', JSON.stringify(doctors));
             e.target.reset();
             document.getElementById('doc-id').value = '';
-            renderAdminDoctors();
+            await renderAdminDoctors();
         }
 
-        function renderAdminDoctors() {
-            const doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            document.getElementById('doctors-list').innerHTML = doctors.map(d => `
+        async function renderAdminDoctors() {
+            const { data: doctors } = await db.from('doctors').select('*');
+            document.getElementById('doctors-list').innerHTML = (doctors || []).map(d => `
                 <div class="p-2 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
                     <div>
                         <p class="font-bold">${d.name} (${d.department})</p>
@@ -209,29 +215,31 @@
             `).join('');
         }
 
-        function deleteDoctor(id) {
-            let doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            localStorage.setItem('clinic_doctors', JSON.stringify(doctors.filter(d => d.id !== id)));
-            renderAdminDoctors();
+        async function deleteDoctor(id) {
+            if(confirm('هل أنت متأكد؟')) {
+                await db.from('doctors').delete().eq('id', id);
+                await renderAdminDoctors();
+            }
         }
 
-        function renderAdminCases() {
-            const bookings = JSON.parse(localStorage.getItem('clinic_bookings')) || [];
-            document.getElementById('cases-list').innerHTML = bookings.length ? bookings.map(b => `
+        async function renderAdminCases() {
+            const { data: bookings } = await db.from('bookings').select('*');
+            document.getElementById('cases-list').innerHTML = (bookings && bookings.length) ? bookings.map(b => `
                 <div class="p-2 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
                     <div>
-                        <p class="font-bold">${b.patientName} (${b.status})</p>
-                        <p class="text-[10px] text-slate-400">دكتور: ${b.doctorName} | دور: ${b.queueNumber}</p>
+                        <p class="font-bold">${b.patient_name} (${b.status})</p>
+                        <p class="text-[10px] text-slate-400">دكتور: ${b.doctor_name} | دور: ${b.queue_number}</p>
                     </div>
                     <button onclick="deleteCase('${b.id}')" class="text-rose-600 font-bold">حذف</button>
                 </div>
             `).join('') : '<p class="text-xs text-slate-400">لا توجد حالات</p>';
         }
 
-        function deleteCase(id) {
-            let bookings = JSON.parse(localStorage.getItem('clinic_bookings')) || [];
-            localStorage.setItem('clinic_bookings', JSON.stringify(bookings.filter(b => b.id !== id)));
-            renderAdminCases();
+        async function deleteCase(id) {
+            if(confirm('هل تريد حذف هذه الحالة؟')) {
+                await db.from('bookings').delete().eq('id', id);
+                await renderAdminCases();
+            }
         }
     </script>
 </body>
