@@ -6,6 +6,7 @@
     <title>لوحة الدكتور</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
@@ -73,15 +74,18 @@
     </div>
 
     <script>
+        const SUPABASE_URL = 'https://msfkzlgzrrwowzqswjeo.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_VrSSf2MML6_kII0uVt535w_kxtc62vQ';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let currentDoctorUsername = '';
 
-        function handleDoctorLogin(e) {
+        async function handleDoctorLogin(e) {
             e.preventDefault();
             const user = document.getElementById('doc-login-user').value;
             const pass = document.getElementById('doc-login-pass').value;
 
-            const doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            const doc = doctors.find(d => d.username === user && d.password === pass);
+            const { data: doc } = await db.from('doctors').select('*').eq('username', user).eq('password', pass).single();
 
             if(doc) {
                 currentDoctorUsername = user;
@@ -89,7 +93,7 @@
                 document.getElementById('doctor-dashboard').classList.remove('hidden');
                 loadDoctorData();
             } else {
-                alert('البيانات غير صحيحة');
+                alert('بيانات الدخول غير صحيحة');
             }
         }
 
@@ -99,69 +103,63 @@
             document.getElementById('doctor-login-screen').classList.remove('hidden');
         }
 
-        function loadDoctorData() {
-            const doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            const doc = doctors.find(d => d.username === currentDoctorUsername);
+        async function loadDoctorData() {
+            const { data: doc } = await db.from('doctors').select('*').eq('username', currentDoctorUsername).single();
 
             if(doc) {
                 document.getElementById('doc-welcome-name').innerText = `د. ${doc.name}`;
                 document.getElementById('doc-dept-label').innerText = doc.department;
-                document.getElementById('doc-presence').value = doc.isPresent ? "true" : "false";
-                document.getElementById('doc-room').value = doc.roomNumber || '1';
+                document.getElementById('doc-presence').value = doc.is_present ? "true" : "false";
+                document.getElementById('doc-room').value = doc.room_number || '1';
                 document.getElementById('doc-duration').value = doc.duration || 20;
-                document.getElementById('doc-current-case').value = doc.currentCase || 0;
-                renderDoctorCases();
+                document.getElementById('doc-current-case').value = doc.current_case || 0;
+                await renderDoctorCases();
             }
         }
 
-        function updateDoctorStatus() {
-            const isPresent = document.getElementById('doc-presence').value === "true";
-            const roomNumber = document.getElementById('doc-room').value;
+        async function updateDoctorStatus() {
+            const is_present = document.getElementById('doc-presence').value === "true";
+            const room_number = document.getElementById('doc-room').value;
             const duration = parseInt(document.getElementById('doc-duration').value) || 20;
-            const currentCase = parseInt(document.getElementById('doc-current-case').value) || 0;
+            const current_case = parseInt(document.getElementById('doc-current-case').value) || 0;
 
-            let doctors = JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-            doctors = doctors.map(d => d.username === currentDoctorUsername ? { ...d, isPresent, roomNumber, duration, currentCase } : d);
-            localStorage.setItem('clinic_doctors', JSON.stringify(doctors));
+            await db.from('doctors').update({ is_present, room_number, duration, current_case }).eq('username', currentDoctorUsername);
 
-            alert('تم التحديث');
+            alert('تم تحديث البيانات بنجاح');
             loadDoctorData();
         }
 
-        function renderDoctorCases() {
-            const bookings = JSON.parse(localStorage.getItem('clinic_bookings')) || [];
+        async function renderDoctorCases() {
+            const { data: docPending } = await db.from('bookings').select('*').eq('doctor_username', currentDoctorUsername).eq('status', 'قيد الانتظار');
+            const { data: docCompleted } = await db.from('bookings').select('*').eq('doctor_username', currentDoctorUsername).eq('status', 'مكتملة');
+
             const pendingDiv = document.getElementById('doc-pending-cases');
             const completedDiv = document.getElementById('doc-completed-cases');
 
-            const docPending = bookings.filter(b => b.doctorUsername === currentDoctorUsername && b.status === 'قيد الانتظار');
-            const docCompleted = bookings.filter(b => b.doctorUsername === currentDoctorUsername && b.status === 'مكتملة');
-
-            pendingDiv.innerHTML = docPending.length ? docPending.map(b => `
+            pendingDiv.innerHTML = (docPending || []).length ? docPending.map(b => `
                 <div class="p-2.5 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
                     <div>
-                        <p class="font-bold">${b.patientName} <span class="text-teal-600">(دور: ${b.queueNumber})</span></p>
-                        <p class="text-[10px] text-slate-400">هاتف: ${b.patientPhone}</p>
+                        <p class="font-bold">${b.patient_name} <span class="text-teal-600">(دور: ${b.queue_number})</span></p>
+                        <p class="text-[10px] text-slate-400">هاتف: ${b.patient_phone}</p>
                     </div>
                     <button onclick="markAsCompleted('${b.id}')" class="bg-teal-600 text-white font-bold px-2.5 py-1 rounded-md text-[10px]">مكتملة</button>
                 </div>
             `).join('') : '<p class="text-[10px] text-slate-400">لا توجد حالات</p>';
 
-            completedDiv.innerHTML = docCompleted.length ? docCompleted.map(b => `
+            completedDiv.innerHTML = (docCompleted || []).length ? docCompleted.map(b => `
                 <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
                     <div>
-                        <p class="font-bold">${b.patientName}</p>
-                        <p class="text-[10px] text-slate-400">رقم الدور: ${b.queueNumber}</p>
+                        <p class="font-bold">${b.patient_name}</p>
+                        <p class="text-[10px] text-slate-400">رقم الدور: ${b.queue_number}</p>
                     </div>
                     <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">مكتملة</span>
                 </div>
             `).join('') : '<p class="text-[10px] text-slate-400">لا توجد حالات مكتملة</p>';
         }
 
-        function markAsCompleted(id) {
-            let bookings = JSON.parse(localStorage.getItem('clinic_bookings')) || [];
-            bookings = bookings.map(b => b.id === id ? { ...b, status: 'مكتملة' } : b);
-            localStorage.setItem('clinic_bookings', JSON.stringify(bookings));
-            renderDoctorCases();
+        async function markAsCompleted(id) {
+            await db.from('bookings').update({ status: 'مكتملة' }).eq('id', id);
+            await renderDoctorCases();
         }
     </script>
 </body>
