@@ -3,159 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">عيادة سرت المركزية - حجز المواعيد</title>
+    <title id="page-title">عيادة سرت المركزية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
-    <!-- شريط العناوين العلوي -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3 space-x-reverse">
-                <img id="clinic-logo" src="https://via.placeholder.com/50" alt="شعار العيادة" class="w-12 h-12 rounded-full object-cover border-2 border-teal-600">
-                <h1 id="clinic-name" class="text-xl font-bold text-teal-800">عيادة سرت المركزية</h1>
+    <!-- شريط علوي مرن للهواتف -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3 border-b border-slate-200">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <img id="clinic-logo" src="https://via.placeholder.com/40" alt="شعار" class="w-10 h-10 rounded-full object-cover border">
+                <h1 id="clinic-name" class="text-base font-bold text-teal-800 truncate max-w-[150px]">عيادة سرت المركزية</h1>
             </div>
-            <div>
-                <button onclick="openMyBookingsModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow">
-                    <i class="fa-solid fa-calendar-check"></i> حجوزاتي
-                </button>
-            </div>
+            <button onclick="openMyBookingsModal()" class="bg-teal-600 active:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                <i class="fa-solid fa-calendar-check"></i> حجوزاتي
+            </button>
         </div>
     </header>
 
-    <!-- المحتوى الرئيسي -->
-    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
-        <!-- قسم ترحيبي -->
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-extrabold text-slate-900 mb-2">احجز موعدك بكل سهولة</h2>
-            <p class="text-slate-600">اختر القسم المناسب وتعرف على تفاصيل الدكاترة وحالة الانتظار مباشرة</p>
+    <main class="max-w-md mx-auto px-4 pt-4">
+        <!-- ترويسة بسيطة -->
+        <div class="bg-teal-700 text-white rounded-2xl p-4 mb-5 shadow-md">
+            <h2 class="text-lg font-bold">مرحباً بك 👋</h2>
+            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين وحجز موعدك فوراً.</p>
         </div>
 
         <!-- الأقسام -->
-        <div id="departments-section" class="mb-12">
-            <h3 class="text-xl font-bold text-slate-800 mb-6 border-r-4 border-teal-600 pr-3">أقسام العيادة</h3>
-            <div id="departments-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- يتم تعبئتها ديناميكياً -->
+        <div id="departments-section">
+            <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-stethoscope text-teal-600"></i> الأقسام المتاحة
+            </h3>
+            <div id="departments-grid" class="space-y-2.5">
+                <!-- تعبئة ديناميكية -->
             </div>
         </div>
 
-        <!-- قائمة الدكاترة (تظهر عند اختيار قسم) -->
-        <div id="doctors-section" class="hidden mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <h3 id="selected-dept-title" class="text-xl font-bold text-slate-800 border-r-4 border-teal-600 pr-3">الدكاترة المتاحون</h3>
-                <button onclick="backToDepartments()" class="text-teal-600 hover:underline text-sm font-semibold flex items-center gap-1">
+        <!-- قائمة الدكاترة -->
+        <div id="doctors-section" class="hidden">
+            <div class="flex items-center justify-between mb-3">
+                <h3 id="selected-dept-title" class="text-sm font-bold text-slate-700">الدكاترة</h3>
+                <button onclick="backToDepartments()" class="text-xs font-bold text-teal-600 flex items-center gap-1">
                     <i class="fa-solid fa-arrow-right"></i> العودة للأقسام
                 </button>
             </div>
-            <div id="doctors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- يتم تعبئتها ديناميكياً -->
+            <div id="doctors-grid" class="space-y-3">
+                <!-- تعبئة ديناميكية -->
             </div>
         </div>
     </main>
 
-    <!-- نافذة الحجز وإدخال البيانات -->
-    <div id="booking-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-fade-in">
-            <button onclick="closeBookingModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h3 class="text-xl font-bold text-slate-900 mb-4">تأكيد حجز الموعد</h3>
-            <div id="booking-info-summary" class="bg-teal-50 p-4 rounded-xl mb-4 text-sm text-teal-900">
-                <!-- ملخص الدكتور ورقم الحالة -->
+    <!-- نافذة إدخال بيانات الحجز -->
+    <div id="booking-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-slate-800">حجز موعد جديد</h3>
+                <button onclick="closeBookingModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form id="booking-form" onsubmit="submitBooking(event)" class="space-y-4">
+            <div id="booking-info-summary" class="bg-teal-50 border border-teal-100 p-3 rounded-xl mb-4 text-xs text-teal-900 space-y-1"></div>
+            <form onsubmit="submitBooking(event)" class="space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">الاسم الكامل</label>
-                    <input type="text" id="patient-name" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">الاسم الكامل *</label>
+                    <input type="text" id="patient-name" required class="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">رقم الهاتف</label>
-                    <input type="tel" id="patient-phone" required placeholder="مثال: 0912345678" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">رقم الهاتف *</label>
+                    <input type="tel" id="patient-phone" required placeholder="09XXXXXXXX" class="w-full px-3 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">الجنس</label>
-                        <select id="patient-gender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">الجنس</label>
+                        <select id="patient-gender" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
                             <option value="ذكر">ذكر</option>
                             <option value="أنثى">أنثى</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">العمر</label>
-                        <input type="number" id="patient-age" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">العمر *</label>
+                        <input type="number" id="patient-age" required class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">ملاحظات (اختياري)</label>
-                    <textarea id="patient-notes" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">ملاحظات (اختياري)</label>
+                    <textarea id="patient-notes" rows="2" class="w-full px-3 py-2 border rounded-xl text-sm outline-none"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg transition shadow">إتمام الحجز</button>
+                <button type="submit" class="w-full bg-teal-600 active:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm transition">تأكيد الحجز</button>
             </form>
         </div>
     </div>
 
     <!-- نافذة حجوزاتي -->
-    <div id="my-bookings-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeMyBookingsModal()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h3 class="text-xl font-bold text-slate-900 mb-4">البحث عن حجوزاتي</h3>
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="search-name" placeholder="الاسم الكامل" class="flex-1 px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-teal-500">
-                <input type="tel" id="search-phone" placeholder="رقم الهاتف" class="flex-1 px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-teal-500">
-                <button onclick="searchBookings()" class="bg-teal-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-teal-700">بحث</button>
+    <div id="my-bookings-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-slate-800">البحث عن حجوزاتي</h3>
+                <button onclick="closeMyBookingsModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div id="my-bookings-results" class="space-y-4">
-                <p class="text-slate-500 text-center py-4">أدخل الاسم ورقم الهاتف لعرض الحجوزات غير المكتملة.</p>
+            <div class="space-y-2 mb-4">
+                <input type="text" id="search-name" placeholder="الاسم الكامل" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                <input type="tel" id="search-phone" placeholder="رقم الهاتف" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
+                <button onclick="searchBookings()" class="w-full bg-teal-600 text-white py-2 rounded-xl text-sm font-bold">عرض الحجوزات</button>
             </div>
-        </div>
-    </div>
-
-    <!-- نافذة الفاتورة / الإيصال -->
-    <div id="invoice-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
-            <div id="invoice-content" class="p-4 border rounded-xl mb-4 bg-slate-50">
-                <div class="text-center mb-4">
-                    <h2 id="inv-clinic" class="font-bold text-lg text-teal-800">عيادة سرت المركزية</h2>
-                    <p class="text-xs text-slate-500">إيصال حجز موعد طبي</p>
-                </div>
-                <div class="space-y-2 text-sm">
-                    <p><strong>اسم المريض:</strong> <span id="inv-name"></span></p>
-                    <p><strong>رقم الهاتف:</strong> <span id="inv-phone"></span></p>
-                    <p><strong>القسم:</strong> <span id="inv-dept"></span></p>
-                    <p><strong>الدكتور:</strong> <span id="inv-doctor"></span></p>
-                    <p><strong>رقم العيادة:</strong> <span id="inv-room"></span></p>
-                    <p><strong>رقم الحالة (دورك):</strong> <span id="inv-queue" class="text-teal-600 font-bold text-base"></span></p>
-                    <p><strong>الوقت المتوقع:</strong> <span id="inv-time"></span></p>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="downloadPDF()" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 rounded-lg transition text-sm"><i class="fa-solid fa-download ml-1"></i> تنزيل PDF</button>
-                <button onclick="closeInvoiceModal()" class="px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 rounded-lg transition text-sm">إغلاق</button>
+            <div id="my-bookings-results" class="space-y-2">
+                <p class="text-xs text-slate-400 text-center py-4">أدخل بياناتك للبحث عن مواعيدك قيد الانتظار.</p>
             </div>
         </div>
     </div>
 
-    <!-- تذييل الصفحة -->
-    <footer class="bg-white border-t mt-12 py-4 text-center text-xs text-slate-500">
-        <p id="footer-clinic-name">عيادة سرت المركزية</p>
-    </footer>
+    <!-- نافذة الفاتورة -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-4 shadow-xl">
+            <div id="invoice-content" class="p-3 border rounded-xl bg-slate-50 text-xs space-y-2">
+                <div class="text-center pb-2 border-b">
+                    <h2 id="inv-clinic" class="font-bold text-sm text-teal-800">عيادة سرت المركزية</h2>
+                    <p class="text-[10px] text-slate-400">تأكيد حجز موعد</p>
+                </div>
+                <p><strong>اسم المريض:</strong> <span id="inv-name"></span></p>
+                <p><strong>رقم الهاتف:</strong> <span id="inv-phone"></span></p>
+                <p><strong>القسم:</strong> <span id="inv-dept"></span></p>
+                <p><strong>الدكتور:</strong> <span id="inv-doctor"></span></p>
+                <p><strong>رقم العيادة:</strong> <span id="inv-room"></span></p>
+                <p><strong>رقم دورك:</strong> <span id="inv-queue" class="text-teal-600 font-bold text-sm"></span></p>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="downloadPDF()" class="flex-1 bg-teal-600 text-white font-bold py-2 rounded-xl text-xs"><i class="fa-solid fa-download"></i> تنزيل PDF</button>
+                <button onclick="closeInvoiceModal()" class="px-4 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">إغلاق</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // تحميل الإعدادات والبيانات الأولية
         window.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             renderDepartments();
         });
 
         function loadSettings() {
-            const settings = JSON.parse(localStorage.getItem('clinic_settings')) || { name: 'عيادة سرت المركزية', logo: 'https://via.placeholder.com/50' };
+            const settings = JSON.parse(localStorage.getItem('clinic_settings')) || { name: 'عيادة سرت المركزية', logo: '' };
             document.getElementById('clinic-name').innerText = settings.name;
             document.getElementById('page-title').innerText = settings.name;
-            document.getElementById('footer-clinic-name').innerText = settings.name;
             if(settings.logo) document.getElementById('clinic-logo').src = settings.logo;
         }
 
@@ -179,14 +166,9 @@
             const grid = document.getElementById('departments-grid');
             const depts = getDepartments();
             grid.innerHTML = depts.map(d => `
-                <div onclick="selectDepartment('${d.name}')" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer border border-slate-100 flex items-center justify-between group">
-                    <div>
-                        <h4 class="text-lg font-bold text-slate-800 group-hover:text-teal-600 transition">${d.name}</h4>
-                        <p class="text-xs text-slate-500 mt-1">انقر لعرض الأطباء المتاحين</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </div>
+                <div onclick="selectDepartment('${d.name}')" class="bg-white p-3.5 rounded-xl shadow-sm border flex justify-between items-center active:scale-98 transition">
+                    <span class="font-bold text-sm text-slate-800">${d.name}</span>
+                    <i class="fa-solid fa-chevron-left text-xs text-slate-400"></i>
                 </div>
             `).join('');
         }
@@ -202,40 +184,34 @@
             const doctors = getDoctors().filter(doc => doc.department === deptName);
 
             if(doctors.length === 0) {
-                doctorsGrid.innerHTML = `<p class="text-slate-500 col-span-full text-center py-8">لا توجد أطباء مضافون في هذا القسم حالياً.</p>`;
+                doctorsGrid.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">لا يوجد أطباء مضافون حالياً في هذا القسم.</p>`;
                 return;
             }
 
             const bookings = getBookings();
 
             doctorsGrid.innerHTML = doctors.map(doc => {
-                // حساب الحالات
                 const docBookings = bookings.filter(b => b.doctorUsername === doc.username && b.status === 'قيد الانتظار');
                 const currentCase = doc.currentCase || 0;
                 const totalInQueue = docBookings.length;
-                const myEstimatedNumber = currentCase + totalInQueue + 1; // رقم تقريبي للحجز القادم
-
-                const statusBadge = doc.isPresent 
-                    ? `<span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">موجود</span>`
-                    : `<span class="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-semibold">غير موجود</span>`;
 
                 return `
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-3">
-                                <h4 class="text-lg font-bold text-slate-900">${doc.name}</h4>
-                                ${statusBadge}
-                            </div>
-                            <p class="text-xs text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md inline-block mb-3">عيادة رقم: ${doc.roomNumber || 'غير محدد'}</p>
-                            <div class="text-sm text-slate-600 space-y-1 mb-4">
-                                <p><i class="fa-regular fa-clock ml-1 text-slate-400"></i> ${doc.days} | ${doc.timeFrom} إلى ${doc.timeTo}</p>
-                                <p><i class="fa-solid fa-user-doctor ml-1 text-slate-400"></i> واصل في الحالة رقم: <strong class="text-teal-600">${currentCase}</strong></p>
-                                <p><i class="fa-solid fa-users ml-1 text-slate-400"></i> الحالات أمامك في الانتظار: <strong class="text-slate-800">${totalInQueue}</strong></p>
-                                <p><i class="fa-solid fa-hourglass-half ml-1 text-slate-400"></i> المدة التقديرية لكل حالة: ${doc.duration || 20} دقيقة</p>
-                            </div>
+                    <div class="bg-white p-4 rounded-xl border shadow-sm space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-sm text-slate-900">${doc.name}</h4>
+                            ${doc.isPresent 
+                                ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">موجود</span>' 
+                                : '<span class="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-full font-bold">غير موجود</span>'}
                         </div>
-                        <button ${!doc.isPresent ? 'disabled' : ''} onclick="openBookingModal('${doc.username}', '${doc.name}', '${doc.roomNumber}', ${doc.duration || 20})" class="w-full ${doc.isPresent ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} font-semibold py-2.5 rounded-xl transition text-sm shadow-sm">
-                            ${doc.isPresent ? 'حجز موعد' : 'الدكتور غير موجود حالياً'}
+                        <div class="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                            <p>🚪 <strong>عيادة رقم:</strong> ${doc.roomNumber || 'غير محدد'}</p>
+                            <p>📅 <strong>المواعيد:</strong> ${doc.days} (${doc.timeFrom} - ${doc.timeTo})</p>
+                            <p>🎯 <strong>واصل في الحالة:</strong> <strong class="text-teal-600">${currentCase}</strong></p>
+                            <p>👥 <strong>حالات أمامك:</strong> ${totalInQueue}</p>
+                            <p>⏱️ <strong>مدة الحالة:</strong> ${doc.duration || 20} دقيقة</p>
+                        </div>
+                        <button ${!doc.isPresent ? 'disabled' : ''} onclick="openBookingModal('${doc.username}', '${doc.name}', '${doc.roomNumber}', ${doc.duration || 20})" class="w-full ${doc.isPresent ? 'bg-teal-600 active:bg-teal-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} py-2 rounded-xl text-xs font-bold transition">
+                            ${doc.isPresent ? 'حجز موعد' : 'غير المتاح حالياً'}
                         </button>
                     </div>
                 `;
@@ -254,15 +230,13 @@
             const bookings = getBookings().filter(b => b.doctorUsername === username && b.status === 'قيد الانتظار');
             const currentCase = doc.currentCase || 0;
             const queueNumber = currentCase + bookings.length + 1;
-            const estimatedMinutes = (bookings.length) * duration;
 
-            selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept, duration };
+            selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept };
 
             document.getElementById('booking-info-summary').innerHTML = `
-                <p><strong>الدكتور:</strong> ${name}</p>
-                <p><strong>رقم العيادة:</strong> ${room}</p>
-                <p><strong>رقم حالتك المتوقع:</strong> <span class="text-teal-700 font-bold">${queueNumber}</span></p>
-                <p><strong>الانتظار التقريبي:</strong> ${estimatedMinutes} دقيقة تقريباً</p>
+                <p>👨‍⚕️ <strong>الدكتور:</strong> ${name}</p>
+                <p>🚪 <strong>عيادة رقم:</strong> ${room}</p>
+                <p>🔢 <strong>رقم حالتك المتوقع:</strong> <span class="text-teal-700 font-bold">${queueNumber}</span></p>
             `;
             document.getElementById('booking-modal').classList.remove('hidden');
         }
@@ -273,19 +247,13 @@
 
         function submitBooking(e) {
             e.preventDefault();
-            const name = document.getElementById('patient-name').value;
-            const phone = document.getElementById('patient-phone').value;
-            const gender = document.getElementById('patient-gender').value;
-            const age = document.getElementById('patient-age').value;
-            const notes = document.getElementById('patient-notes').value;
-
             const newBooking = {
                 id: 'BK-' + Date.now(),
-                patientName: name,
-                patientPhone: phone,
-                gender,
-                age,
-                notes,
+                patientName: document.getElementById('patient-name').value,
+                patientPhone: document.getElementById('patient-phone').value,
+                gender: document.getElementById('patient-gender').value,
+                age: document.getElementById('patient-age').value,
+                notes: document.getElementById('patient-notes').value,
                 department: selectedDoctorData.department,
                 doctorName: selectedDoctorData.name,
                 doctorUsername: selectedDoctorData.username,
@@ -300,9 +268,6 @@
             localStorage.setItem('clinic_bookings', JSON.stringify(bookings));
 
             closeBookingModal();
-            document.getElementById('booking-form').reset();
-
-            // عرض الفاتورة
             showInvoice(newBooking);
         }
 
@@ -313,8 +278,6 @@
             document.getElementById('inv-doctor').innerText = b.doctorName;
             document.getElementById('inv-room').innerText = b.roomNumber;
             document.getElementById('inv-queue').innerText = b.queueNumber;
-            document.getElementById('inv-time').innerText = 'يتم الحساب بناءً على تقدم الدكتور';
-
             document.getElementById('invoice-modal').classList.remove('hidden');
         }
 
@@ -324,8 +287,7 @@
         }
 
         function downloadPDF() {
-            const element = document.getElementById('invoice-content');
-            html2pdf().from(element).save('Clinic-Appointment.pdf');
+            html2pdf().from(document.getElementById('invoice-content')).save('Receipt.pdf');
         }
 
         function openMyBookingsModal() {
@@ -342,7 +304,7 @@
             const resultsDiv = document.getElementById('my-bookings-results');
 
             if(!nameQuery || !phoneQuery) {
-                alert('الرجاء إدخال الاسم ورقم الهاتف للبحث');
+                alert('الرجاء إدخال الاسم ورقم الهاتف');
                 return;
             }
 
@@ -351,26 +313,24 @@
             );
 
             if(bookings.length === 0) {
-                resultsDiv.innerHTML = `<p class="text-slate-500 text-center py-4">لا توجد حجوزات نشطة مطابقة للبيانات المدخلة.</p>`;
+                resultsDiv.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">لا توجد حجوزات نشطة بهذا الاسم والهاتف.</p>`;
                 return;
             }
 
             resultsDiv.innerHTML = bookings.map(b => `
-                <div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-center">
+                <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
                     <div>
-                        <h4 class="font-bold text-slate-800">${b.doctorName} (${b.department})</h4>
-                        <p class="text-xs text-slate-500">رقم العيادة: ${b.roomNumber} | رقم دورك: <strong class="text-teal-600">${b.queueNumber}</strong></p>
-                        <p class="text-xs text-slate-400 mt-1">التاريخ: ${b.date}</p>
+                        <p class="font-bold text-slate-800">${b.doctorName}</p>
+                        <p class="text-slate-500">رقم الدور: <strong class="text-teal-600">${b.queueNumber}</strong> | عيادة ${b.roomNumber}</p>
                     </div>
-                    <button onclick="cancelBooking('${b.id}')" class="bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs px-3 py-1.5 rounded-lg font-semibold transition">إلغاء الحجز</button>
+                    <button onclick="cancelBooking('${b.id}')" class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-lg font-bold">إلغاء</button>
                 </div>
             `).join('');
         }
 
         function cancelBooking(id) {
-            if(confirm('هل أنت متأكد من إلغاء هذا الحجز؟')) {
-                let bookings = getBookings();
-                bookings = bookings.filter(b => b.id !== id);
+            if(confirm('هل تريد إلغاء الحجز؟')) {
+                let bookings = getBookings().filter(b => b.id !== id);
                 localStorage.setItem('clinic_bookings', JSON.stringify(bookings));
                 searchBookings();
             }
