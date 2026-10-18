@@ -3,85 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - الإدارة</title>
+    <title>لوحة التحكم - إدارة العيادة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <!-- تسجيل الدخول -->
-    <div id="login-screen" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl">
-            <h2 class="text-base font-bold text-slate-800 mb-3 text-center">دخول الإدارة</h2>
-            <form onsubmit="handleAdminLogin(event)" class="space-y-3">
-                <input type="password" id="admin-pass" required placeholder="كلمة المرور (123)" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
-                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-xl text-sm">دخول</button>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-8 shadow-2xl border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">تسجيل دخول الإدارة</h2>
+                <p class="text-xs text-slate-500 mt-1">أدخل كلمة المرور للوصول إلى لوحة التحكم</p>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور</label>
+                    <input type="password" id="admin-pass" required placeholder="كلمة المرور (123)" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition">
+                </div>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-md">دخول النظام</button>
             </form>
         </div>
     </div>
 
-    <!-- لوحة الإدارة -->
-    <div id="admin-dashboard" class="hidden max-w-md mx-auto px-4 pt-4 space-y-4">
-        <div class="flex justify-between items-center bg-white p-3 rounded-xl border">
-            <h1 class="font-bold text-sm text-teal-800">لوحة الإدارة</h1>
-            <button onclick="logoutAdmin()" class="text-rose-600 text-xs font-bold">خروج</button>
-        </div>
-
-        <!-- الإعدادات والشعار -->
-        <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">إعدادات الموقع والشعار</h3>
-            <form onsubmit="saveSettings(event)" class="space-y-2">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 mb-1">اسم العيادة</label>
-                    <input type="text" id="set-name" required class="w-full px-3 py-1.5 border rounded-lg text-xs outline-none">
+    <!-- لوحة الإدارة الرئيسية للشاشات الكبيرة -->
+    <div id="admin-dashboard" class="hidden min-h-screen flex flex-col">
+        
+        <!-- الشريط العلوي الرئيسي (Header) -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-teal-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
+                        <i class="fa-solid fa-hospital"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base text-slate-800" id="header-clinic-name">لوحة تحكم العيادة</h1>
+                        <p class="text-xs text-slate-500">نظام إدارة الحجوزات والدكاترة والأقسام</p>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 mb-1">ارفاق صورة الشعار</label>
-                    <input type="file" id="set-logo-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700">
-                    <img id="logo-preview" src="" class="w-10 h-10 mt-2 rounded-full hidden border object-cover">
+                <div class="flex items-center gap-4">
+                    <span class="text-xs bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-200 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-circle text-[8px] text-emerald-500"></i> متصل بقاعدة البيانات
+                    </span>
+                    <button onclick="logoutAdmin()" class="bg-rose-50 text-rose-600 hover:bg-rose-100 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+                    </button>
                 </div>
-                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-1.5 rounded-lg text-xs">حفظ الإعدادات</button>
-            </form>
-        </section>
+            </div>
+        </header>
 
-        <!-- الأقسام -->
-        <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">إدارة الأقسام</h3>
-            <form onsubmit="saveDepartment(event)" class="flex gap-2">
-                <input type="hidden" id="dept-id">
-                <input type="text" id="dept-name" required placeholder="اسم القسم" class="flex-1 px-3 py-1.5 border rounded-lg text-xs outline-none">
-                <button type="submit" class="bg-teal-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs">حفظ</button>
-            </form>
-            <div id="departments-list" class="space-y-1.5"></div>
-        </section>
+        <!-- المحتوى الرئيسي (Desktop Grid Layout) -->
+        <main class="max-w-7xl mx-auto px-6 py-6 flex-grow w-full space-y-6">
 
-        <!-- الدكاترة -->
-        <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">إدارة الدكاترة</h3>
-            <form onsubmit="saveDoctor(event)" class="space-y-2 text-xs">
-                <input type="hidden" id="doc-id">
-                <input type="text" id="doc-name" required placeholder="اسم الدكتور" class="w-full px-2.5 py-1.5 border rounded-lg">
-                <select id="doc-dept" required class="w-full px-2.5 py-1.5 border rounded-lg"></select>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="doc-username" required placeholder="اسم المستخدم" class="w-full px-2.5 py-1.5 border rounded-lg">
-                    <input type="password" id="doc-password" required placeholder="كلمة المرور" class="w-full px-2.5 py-1.5 border rounded-lg">
+            <!-- كروت الإحصائيات السريعة -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 mb-1">إجمالي الأقسام</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="stat-depts-count">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
                 </div>
-                <input type="text" id="doc-days" required placeholder="أيام العمل (الأحد - الخميس)" class="w-full px-2.5 py-1.5 border rounded-lg">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="doc-from" required placeholder="من (08:00 ص)" class="w-full px-2.5 py-1.5 border rounded-lg">
-                    <input type="text" id="doc-to" required placeholder="إلى (02:00 م)" class="w-full px-2.5 py-1.5 border rounded-lg">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 mb-1">إجمالي الدكاترة</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="stat-doctors-count">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
                 </div>
-                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg text-xs">حفظ الدكتور</button>
-            </form>
-            <div id="doctors-list" class="space-y-2 pt-2"></div>
-        </section>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 mb-1">الحالات المنتظرة</p>
+                        <h3 class="text-2xl font-bold text-amber-600" id="stat-pending-count">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 mb-1">الحالات المكتملة</p>
+                        <h3 class="text-2xl font-bold text-emerald-600" id="stat-completed-count">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+            </div>
 
-        <!-- الحالات -->
-        <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">متابعة الحالات</h3>
-            <div id="cases-list" class="space-y-2"></div>
-        </section>
+            <!-- تقسيم الشاشة على الكمبيوتر: عمود للضبط والدكاترة وعمود للأقسام والحالات -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- الجانب الأيمن (إضافة وتعديل الدكاترة والضبط) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- إعدادات العيادة والشعار -->
+                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-r-4 border-teal-600 pr-3">
+                            <i class="fa-solid fa-gear text-teal-600"></i> إعدادات العيادة والشعار
+                        </h3>
+                        <form onsubmit="saveSettings(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">اسم العيادة الرسمي</label>
+                                <input type="text" id="set-name" required placeholder="مثال: عيادة سرت المركزية" class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">صورة الشعار</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="file" id="set-logo-file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold">
+                                    <img id="logo-preview" src="" class="w-9 h-9 rounded-full hidden border object-cover shrink-0">
+                                </div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition shadow-sm">حفظ الإعدادات العامة</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- إضافة وإدارة الدكاترة -->
+                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-r-4 border-teal-600 pr-3">
+                            <i class="fa-solid fa-user-plus text-teal-600"></i> إضافة وإدارة الدكاترة
+                        </h3>
+                        <form onsubmit="saveDoctor(event)" class="space-y-3">
+                            <input type="hidden" id="doc-id">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">اسم الدكتور الكامل</label>
+                                    <input type="text" id="doc-name" required placeholder="مثال: د. محمد علي" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">القسم الفني</label>
+                                    <select id="doc-dept" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500"></select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">اسم المستخدم لدخول الدكتور</label>
+                                    <input type="text" id="doc-username" required placeholder="مثال: dr_mohammed" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">كلمة المرور</label>
+                                    <input type="password" id="doc-password" required placeholder="******" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">أيام العمل</label>
+                                    <input type="text" id="doc-days" required placeholder="الأحد - الخميس" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">التوقيت (من)</label>
+                                    <input type="text" id="doc-from" required placeholder="08:00 ص" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">التوقيت (إلى)</label>
+                                    <input type="text" id="doc-to" required placeholder="02:00 م" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm mt-2">حفظ بيانات الدكتور</button>
+                        </form>
+
+                        <!-- جدول الدكاترة المضافين -->
+                        <div class="mt-6">
+                            <h4 class="text-xs font-bold text-slate-700 mb-2">قائمة الدكاترة المسجلين:</h4>
+                            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                                <table class="w-full text-right text-xs">
+                                    <thead class="bg-slate-50 border-b text-slate-600 font-bold">
+                                        <tr>
+                                            <th class="p-2.5">الدكتور</th>
+                                            <th class="p-2.5">القسم</th>
+                                            <th class="p-2.5">المستخدم</th>
+                                            <th class="p-2.5 text-center">الإجراءات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="doctors-table-body" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- الجانب الأيسر (الأقسام ومتابعة الحجوزات) -->
+                <div class="lg:col-span-5 space-y-6">
+
+                    <!-- إدارة الأقسام -->
+                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-r-4 border-teal-600 pr-3">
+                            <i class="fa-solid fa-list-check text-teal-600"></i> إدارة الأقسام الطبية
+                        </h3>
+                        <form onsubmit="saveDepartment(event)" class="flex gap-2 mb-4">
+                            <input type="hidden" id="dept-id">
+                            <input type="text" id="dept-name" required placeholder="اسم القسم الجديد..." class="flex-1 px-3.5 py-2 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-teal-500">
+                            <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-sm">إضافة</button>
+                        </form>
+                        <div id="departments-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </section>
+
+                    <!-- متابعة الحالات الحالية -->
+                    <section class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-r-4 border-teal-600 pr-3">
+                            <i class="fa-solid fa-users text-teal-600"></i> قائمة الحالات الحالية
+                        </h3>
+                        <div id="cases-list" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
+                    </section>
+
+                </div>
+
+            </div>
+        </main>
     </div>
 
     <script>
@@ -98,7 +237,7 @@
                 document.getElementById('admin-dashboard').classList.remove('hidden');
                 loadAdminData();
             } else {
-                alert('كلمة المرور 123');
+                alert('كلمة المرور غير صحيحة (كلمة المرور هي 123)');
             }
         }
 
@@ -111,6 +250,7 @@
             const { data: settings } = await db.from('settings').select('*').single();
             if(settings) {
                 document.getElementById('set-name').value = settings.name || '';
+                document.getElementById('header-clinic-name').innerText = settings.name || 'لوحة تحكم العيادة';
                 if(settings.logo) {
                     uploadedLogoBase64 = settings.logo;
                     const prev = document.getElementById('logo-preview');
@@ -141,8 +281,13 @@
         async function saveSettings(e) {
             e.preventDefault();
             const name = document.getElementById('set-name').value;
-            await db.from('settings').upsert({ id: 1, name, logo: uploadedLogoBase64 });
-            alert('تم الحفظ في قاعدة البيانات');
+            const res = await db.from('settings').upsert({ id: 1, name, logo: uploadedLogoBase64 });
+            if (res.error) {
+                alert('حدث خطأ أثناء الحفظ: ' + res.error.message);
+            } else {
+                alert('تم حفظ الإعدادات بنجاح!');
+                document.getElementById('header-clinic-name').innerText = name;
+            }
         }
 
         async function saveDepartment(e) {
@@ -150,23 +295,30 @@
             const id = document.getElementById('dept-id').value;
             const name = document.getElementById('dept-name').value;
 
+            let res;
             if(id) {
-                await db.from('departments').update({ name }).eq('id', id);
+                res = await db.from('departments').update({ name }).eq('id', id);
             } else {
-                await db.from('departments').insert([{ name }]);
+                res = await db.from('departments').insert([{ name }]);
             }
 
-            document.getElementById('dept-name').value = '';
-            document.getElementById('dept-id').value = '';
-            await renderAdminDepartments();
+            if(res.error) {
+                alert('خطأ: ' + res.error.message);
+            } else {
+                document.getElementById('dept-name').value = '';
+                document.getElementById('dept-id').value = '';
+                await renderAdminDepartments();
+            }
         }
 
         async function renderAdminDepartments() {
             const { data: depts } = await db.from('departments').select('*');
+            document.getElementById('stat-depts-count').innerText = depts ? depts.length : 0;
+            
             document.getElementById('departments-list').innerHTML = (depts || []).map(d => `
-                <div class="flex justify-between items-center p-2 bg-slate-50 border rounded-lg text-xs">
-                    <span>${d.name}</span>
-                    <button onclick="deleteDepartment('${d.id}')" class="text-rose-600 font-bold">حذف</button>
+                <div class="flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs hover:bg-slate-100 transition">
+                    <span class="font-semibold text-slate-800">${d.name}</span>
+                    <button onclick="deleteDepartment('${d.id}')" class="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition">حذف</button>
                 </div>
             `).join('');
 
@@ -174,9 +326,10 @@
         }
 
         async function deleteDepartment(id) {
-            if(confirm('هل أنت متأكد؟')) {
-                await db.from('departments').delete().eq('id', id);
-                await renderAdminDepartments();
+            if(confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+                const res = await db.from('departments').delete().eq('id', id);
+                if(res.error) alert('خطأ أثناء الحذف: ' + res.error.message);
+                else await renderAdminDepartments();
             }
         }
 
@@ -191,54 +344,75 @@
             const time_from = document.getElementById('doc-from').value;
             const time_to = document.getElementById('doc-to').value;
 
+            let res;
             if(id) {
-                await db.from('doctors').update({ name, department, username, password, days, time_from, time_to }).eq('id', id);
+                res = await db.from('doctors').update({ name, department, username, password, days, time_from, time_to }).eq('id', id);
             } else {
-                await db.from('doctors').insert([{ name, department, username, password, days, time_from, time_to }]);
+                res = await db.from('doctors').insert([{ name, department, username, password, days, time_from, time_to }]);
             }
 
-            e.target.reset();
-            document.getElementById('doc-id').value = '';
-            await renderAdminDoctors();
+            if(res.error) {
+                alert('حدث خطأ أثناء إدخال البيانات: ' + res.error.message);
+            } else {
+                alert('تم حفظ بيانات الدكتور بنجاح!');
+                e.target.reset();
+                document.getElementById('doc-id').value = '';
+                await renderAdminDoctors();
+            }
         }
 
         async function renderAdminDoctors() {
             const { data: doctors } = await db.from('doctors').select('*');
-            document.getElementById('doctors-list').innerHTML = (doctors || []).map(d => `
-                <div class="p-2 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
-                    <div>
-                        <p class="font-bold">${d.name} (${d.department})</p>
-                        <p class="text-[10px] text-slate-400">مستخدم: ${d.username}</p>
-                    </div>
-                    <button onclick="deleteDoctor('${d.id}')" class="text-rose-600 font-bold">حذف</button>
-                </div>
-            `).join('');
+            document.getElementById('stat-doctors-count').innerText = doctors ? doctors.length : 0;
+
+            document.getElementById('doctors-table-body').innerHTML = (doctors && doctors.length) ? doctors.map(d => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-2.5 font-bold text-slate-800">${d.name}</td>
+                    <td class="p-2.5 text-slate-600">${d.department}</td>
+                    <td class="p-2.5 text-teal-700 font-mono">${d.username}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteDoctor('${d.id}')" class="text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg font-bold transition">حذف</button>
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" class="p-4 text-center text-slate-400">لا يوجد دكاترة مضافون بعد</td></tr>';
         }
 
         async function deleteDoctor(id) {
-            if(confirm('هل أنت متأكد؟')) {
-                await db.from('doctors').delete().eq('id', id);
-                await renderAdminDoctors();
+            if(confirm('هل أنت متأكد من حذف حساب هذا الدكتور؟')) {
+                const res = await db.from('doctors').delete().eq('id', id);
+                if(res.error) alert('حدث خطأ: ' + res.error.message);
+                else await renderAdminDoctors();
             }
         }
 
         async function renderAdminCases() {
             const { data: bookings } = await db.from('bookings').select('*');
+            
+            const pending = (bookings || []).filter(b => b.status === 'قيد الانتظار');
+            const completed = (bookings || []).filter(b => b.status === 'مكتملة');
+
+            document.getElementById('stat-pending-count').innerText = pending.length;
+            document.getElementById('stat-completed-count').innerText = completed.length;
+
             document.getElementById('cases-list').innerHTML = (bookings && bookings.length) ? bookings.map(b => `
-                <div class="p-2 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs flex justify-between items-center hover:bg-slate-100 transition">
                     <div>
-                        <p class="font-bold">${b.patient_name} (${b.status})</p>
-                        <p class="text-[10px] text-slate-400">دكتور: ${b.doctor_name} | دور: ${b.queue_number}</p>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800">${b.patient_name}</span>
+                            <span class="${b.status === 'مكتملة' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} text-[10px] px-2 py-0.5 rounded-full font-bold">${b.status}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">الدكتور: <strong>${b.doctor_name}</strong> | الدور: <strong class="text-teal-600">${b.queue_number}</strong></p>
                     </div>
-                    <button onclick="deleteCase('${b.id}')" class="text-rose-600 font-bold">حذف</button>
+                    <button onclick="deleteCase('${b.id}')" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded-lg transition" title="حذف الحالة"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
-            `).join('') : '<p class="text-xs text-slate-400">لا توجد حالات</p>';
+            `).join('') : '<p class="text-xs text-slate-400 text-center py-4">لا توجد حجوزات حتى الآن</p>';
         }
 
         async function deleteCase(id) {
-            if(confirm('هل تريد حذف هذه الحالة؟')) {
-                await db.from('bookings').delete().eq('id', id);
-                await renderAdminCases();
+            if(confirm('هل تريد حذف هذه الحالة نهائياً؟')) {
+                const res = await db.from('bookings').delete().eq('id', id);
+                if(res.error) alert('حدث خطأ: ' + res.error.message);
+                else await renderAdminCases();
             }
         }
     </script>
