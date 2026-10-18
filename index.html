@@ -7,10 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
-    <!-- شريط علوي مرن للهواتف -->
+    <!-- شريط علوي -->
     <header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3 border-b border-slate-200">
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -24,10 +26,10 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4">
-        <!-- ترويسة بسيطة -->
+        <!-- ترويسة -->
         <div class="bg-teal-700 text-white rounded-2xl p-4 mb-5 shadow-md">
             <h2 class="text-lg font-bold">مرحباً بك 👋</h2>
-            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين وحجز موعدك فوراً.</p>
+            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين واحجز موعدك فوراً.</p>
         </div>
 
         <!-- الأقسام -->
@@ -36,7 +38,7 @@
                 <i class="fa-solid fa-stethoscope text-teal-600"></i> الأقسام المتاحة
             </h3>
             <div id="departments-grid" class="space-y-2.5">
-                <!-- تعبئة ديناميكية -->
+                <p class="text-xs text-slate-400 text-center py-4">جاري تحميل الأقسام...</p>
             </div>
         </div>
 
@@ -48,9 +50,7 @@
                     <i class="fa-solid fa-arrow-right"></i> العودة للأقسام
                 </button>
             </div>
-            <div id="doctors-grid" class="space-y-3">
-                <!-- تعبئة ديناميكية -->
-            </div>
+            <div id="doctors-grid" class="space-y-3"></div>
         </div>
     </main>
 
@@ -88,7 +88,7 @@
                     <label class="block text-xs font-semibold text-slate-600 mb-1">ملاحظات (اختياري)</label>
                     <textarea id="patient-notes" rows="2" class="w-full px-3 py-2 border rounded-xl text-sm outline-none"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-teal-600 active:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm transition">تأكيد الحجز</button>
+                <button type="submit" id="submit-btn" class="w-full bg-teal-600 active:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm transition">تأكيد الحجز</button>
             </form>
         </div>
     </div>
@@ -105,9 +105,7 @@
                 <input type="tel" id="search-phone" placeholder="رقم الهاتف" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
                 <button onclick="searchBookings()" class="w-full bg-teal-600 text-white py-2 rounded-xl text-sm font-bold">عرض الحجوزات</button>
             </div>
-            <div id="my-bookings-results" class="space-y-2">
-                <p class="text-xs text-slate-400 text-center py-4">أدخل بياناتك للبحث عن مواعيدك قيد الانتظار.</p>
-            </div>
+            <div id="my-bookings-results" class="space-y-2"></div>
         </div>
     </div>
 
@@ -134,37 +132,31 @@
     </div>
 
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSettings();
-            renderDepartments();
+        const SUPABASE_URL = 'https://msfkzlgzrrwowzqswjeo.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_VrSSf2MML6_kII0uVt535w_kxtc62vQ';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadSettings();
+            await renderDepartments();
         });
 
-        function loadSettings() {
-            const settings = JSON.parse(localStorage.getItem('clinic_settings')) || { name: 'عيادة سرت المركزية', logo: '' };
-            document.getElementById('clinic-name').innerText = settings.name;
-            document.getElementById('page-title').innerText = settings.name;
-            if(settings.logo) document.getElementById('clinic-logo').src = settings.logo;
+        async function loadSettings() {
+            const { data } = await db.from('settings').select('*').single();
+            if (data) {
+                document.getElementById('clinic-name').innerText = data.name || 'عيادة سرت المركزية';
+                document.getElementById('page-title').innerText = data.name || 'عيادة سرت المركزية';
+                if (data.logo) document.getElementById('clinic-logo').src = data.logo;
+            }
         }
 
-        function getDepartments() {
-            return JSON.parse(localStorage.getItem('clinic_departments')) || [
-                { id: '1', name: 'قسم العيون' },
-                { id: '2', name: 'قسم الأسنان' },
-                { id: '3', name: 'قسم العظام' }
-            ];
-        }
-
-        function getDoctors() {
-            return JSON.parse(localStorage.getItem('clinic_doctors')) || [];
-        }
-
-        function getBookings() {
-            return JSON.parse(localStorage.getItem('clinic_bookings')) || [];
-        }
-
-        function renderDepartments() {
+        async function renderDepartments() {
+            const { data: depts } = await db.from('departments').select('*');
             const grid = document.getElementById('departments-grid');
-            const depts = getDepartments();
+            if (!depts || depts.length === 0) {
+                grid.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">لا توجد أقسام مضافة بعد.</p>';
+                return;
+            }
             grid.innerHTML = depts.map(d => `
                 <div onclick="selectDepartment('${d.name}')" class="bg-white p-3.5 rounded-xl shadow-sm border flex justify-between items-center active:scale-98 transition">
                     <span class="font-bold text-sm text-slate-800">${d.name}</span>
@@ -174,44 +166,44 @@
         }
 
         let currentSelectedDept = '';
-        function selectDepartment(deptName) {
+        async function selectDepartment(deptName) {
             currentSelectedDept = deptName;
             document.getElementById('departments-section').classList.add('hidden');
             document.getElementById('doctors-section').classList.remove('hidden');
             document.getElementById('selected-dept-title').innerText = `دكاترة ${deptName}`;
 
+            const { data: doctors } = await db.from('doctors').select('*').eq('department', deptName);
             const doctorsGrid = document.getElementById('doctors-grid');
-            const doctors = getDoctors().filter(doc => doc.department === deptName);
 
-            if(doctors.length === 0) {
+            if (!doctors || doctors.length === 0) {
                 doctorsGrid.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">لا يوجد أطباء مضافون حالياً في هذا القسم.</p>`;
                 return;
             }
 
-            const bookings = getBookings();
+            const { data: bookings } = await db.from('bookings').select('*').eq('status', 'قيد الانتظار');
 
             doctorsGrid.innerHTML = doctors.map(doc => {
-                const docBookings = bookings.filter(b => b.doctorUsername === doc.username && b.status === 'قيد الانتظار');
-                const currentCase = doc.currentCase || 0;
+                const docBookings = (bookings || []).filter(b => b.doctor_username === doc.username);
+                const currentCase = doc.current_case || 0;
                 const totalInQueue = docBookings.length;
 
                 return `
                     <div class="bg-white p-4 rounded-xl border shadow-sm space-y-2">
                         <div class="flex justify-between items-center">
                             <h4 class="font-bold text-sm text-slate-900">${doc.name}</h4>
-                            ${doc.isPresent 
+                            ${doc.is_present 
                                 ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">موجود</span>' 
                                 : '<span class="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-full font-bold">غير موجود</span>'}
                         </div>
                         <div class="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                            <p>🚪 <strong>عيادة رقم:</strong> ${doc.roomNumber || 'غير محدد'}</p>
-                            <p>📅 <strong>المواعيد:</strong> ${doc.days} (${doc.timeFrom} - ${doc.timeTo})</p>
+                            <p>🚪 <strong>عيادة رقم:</strong> ${doc.room_number || 'غير محدد'}</p>
+                            <p>📅 <strong>المواعيد:</strong> ${doc.days || ''} (${doc.time_from || ''} - ${doc.time_to || ''})</p>
                             <p>🎯 <strong>واصل في الحالة:</strong> <strong class="text-teal-600">${currentCase}</strong></p>
                             <p>👥 <strong>حالات أمامك:</strong> ${totalInQueue}</p>
                             <p>⏱️ <strong>مدة الحالة:</strong> ${doc.duration || 20} دقيقة</p>
                         </div>
-                        <button ${!doc.isPresent ? 'disabled' : ''} onclick="openBookingModal('${doc.username}', '${doc.name}', '${doc.roomNumber}', ${doc.duration || 20})" class="w-full ${doc.isPresent ? 'bg-teal-600 active:bg-teal-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} py-2 rounded-xl text-xs font-bold transition">
-                            ${doc.isPresent ? 'حجز موعد' : 'غير المتاح حالياً'}
+                        <button ${!doc.is_present ? 'disabled' : ''} onclick="openBookingModal('${doc.username}', '${doc.name}', '${doc.room_number}', ${doc.duration || 20})" class="w-full ${doc.is_present ? 'bg-teal-600 active:bg-teal-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'} py-2 rounded-xl text-xs font-bold transition">
+                            ${doc.is_present ? 'حجز موعد' : 'غير متاح حالياً'}
                         </button>
                     </div>
                 `;
@@ -224,12 +216,12 @@
         }
 
         let selectedDoctorData = {};
-        function openBookingModal(username, name, room, duration) {
-            const doctors = getDoctors();
-            const doc = doctors.find(d => d.username === username);
-            const bookings = getBookings().filter(b => b.doctorUsername === username && b.status === 'قيد الانتظار');
-            const currentCase = doc.currentCase || 0;
-            const queueNumber = currentCase + bookings.length + 1;
+        async function openBookingModal(username, name, room, duration) {
+            const { data: doc } = await db.from('doctors').select('*').eq('username', username).single();
+            const { data: bookings } = await db.from('bookings').select('*').eq('doctor_username', username).eq('status', 'قيد الانتظار');
+            
+            const currentCase = doc ? (doc.current_case || 0) : 0;
+            const queueNumber = currentCase + (bookings ? bookings.length : 0) + 1;
 
             selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept };
 
@@ -245,39 +237,42 @@
             document.getElementById('booking-modal').classList.add('hidden');
         }
 
-        function submitBooking(e) {
+        async function submitBooking(e) {
             e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = 'جاري التأكيد...';
+
             const newBooking = {
                 id: 'BK-' + Date.now(),
-                patientName: document.getElementById('patient-name').value,
-                patientPhone: document.getElementById('patient-phone').value,
+                patient_name: document.getElementById('patient-name').value,
+                patient_phone: document.getElementById('patient-phone').value,
                 gender: document.getElementById('patient-gender').value,
                 age: document.getElementById('patient-age').value,
                 notes: document.getElementById('patient-notes').value,
                 department: selectedDoctorData.department,
-                doctorName: selectedDoctorData.name,
-                doctorUsername: selectedDoctorData.username,
-                roomNumber: selectedDoctorData.room,
-                queueNumber: selectedDoctorData.queueNumber,
-                status: 'قيد الانتظار',
-                date: new Date().toLocaleDateString()
+                doctor_name: selectedDoctorData.name,
+                doctor_username: selectedDoctorData.username,
+                room_number: selectedDoctorData.room,
+                queue_number: selectedDoctorData.queueNumber,
+                status: 'قيد الانتظار'
             };
 
-            const bookings = getBookings();
-            bookings.push(newBooking);
-            localStorage.setItem('clinic_bookings', JSON.stringify(bookings));
+            await db.from('bookings').insert([newBooking]);
 
+            btn.disabled = false;
+            btn.innerText = 'تأكيد الحجز';
             closeBookingModal();
             showInvoice(newBooking);
         }
 
         function showInvoice(b) {
-            document.getElementById('inv-name').innerText = b.patientName;
-            document.getElementById('inv-phone').innerText = b.patientPhone;
+            document.getElementById('inv-name').innerText = b.patient_name;
+            document.getElementById('inv-phone').innerText = b.patient_phone;
             document.getElementById('inv-dept').innerText = b.department;
-            document.getElementById('inv-doctor').innerText = b.doctorName;
-            document.getElementById('inv-room').innerText = b.roomNumber;
-            document.getElementById('inv-queue').innerText = b.queueNumber;
+            document.getElementById('inv-doctor').innerText = b.doctor_name;
+            document.getElementById('inv-room').innerText = b.room_number;
+            document.getElementById('inv-queue').innerText = b.queue_number;
             document.getElementById('invoice-modal').classList.remove('hidden');
         }
 
@@ -298,7 +293,7 @@
             document.getElementById('my-bookings-modal').classList.add('hidden');
         }
 
-        function searchBookings() {
+        async function searchBookings() {
             const nameQuery = document.getElementById('search-name').value.trim();
             const phoneQuery = document.getElementById('search-phone').value.trim();
             const resultsDiv = document.getElementById('my-bookings-results');
@@ -308,11 +303,12 @@
                 return;
             }
 
-            const bookings = getBookings().filter(b => 
-                b.patientName.includes(nameQuery) && b.patientPhone === phoneQuery && b.status === 'قيد الانتظار'
-            );
+            const { data: bookings } = await db.from('bookings').select('*')
+                .ilike('patient_name', `%${nameQuery}%`)
+                .eq('patient_phone', phoneQuery)
+                .eq('status', 'قيد الانتظار');
 
-            if(bookings.length === 0) {
+            if(!bookings || bookings.length === 0) {
                 resultsDiv.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">لا توجد حجوزات نشطة بهذا الاسم والهاتف.</p>`;
                 return;
             }
@@ -320,18 +316,17 @@
             resultsDiv.innerHTML = bookings.map(b => `
                 <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
                     <div>
-                        <p class="font-bold text-slate-800">${b.doctorName}</p>
-                        <p class="text-slate-500">رقم الدور: <strong class="text-teal-600">${b.queueNumber}</strong> | عيادة ${b.roomNumber}</p>
+                        <p class="font-bold text-slate-800">${b.doctor_name}</p>
+                        <p class="text-slate-500">رقم الدور: <strong class="text-teal-600">${b.queue_number}</strong> | عيادة ${b.room_number}</p>
                     </div>
                     <button onclick="cancelBooking('${b.id}')" class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-lg font-bold">إلغاء</button>
                 </div>
             `).join('');
         }
 
-        function cancelBooking(id) {
+        async function cancelBooking(id) {
             if(confirm('هل تريد إلغاء الحجز؟')) {
-                let bookings = getBookings().filter(b => b.id !== id);
-                localStorage.setItem('clinic_bookings', JSON.stringify(bookings));
+                await db.from('bookings').delete().eq('id', id);
                 searchBookings();
             }
         }
