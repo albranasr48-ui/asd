@@ -9,6 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* تنسيق طباعة إيصال الحراري 80mm */
+        .receipt-80mm {
+            width: 80mm;
+            padding: 10px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #fff;
+            color: #000;
+        }
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
@@ -17,11 +27,16 @@
         <div class="max-w-md mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <img id="clinic-logo" src="https://via.placeholder.com/40" alt="شعار" class="w-10 h-10 rounded-full object-cover border">
-                <h1 id="clinic-name" class="text-base font-bold text-teal-800 truncate max-w-[150px]">عيادة سرت المركزية</h1>
+                <h1 id="clinic-name" class="text-base font-bold text-teal-800 truncate max-w-[130px]">عيادة سرت المركزية</h1>
             </div>
-            <button onclick="openMyBookingsModal()" class="bg-teal-600 active:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
-                <i class="fa-solid fa-calendar-check"></i> حجوزاتي
-            </button>
+            <div class="flex items-center gap-1.5">
+                <button onclick="openTrackModal()" class="bg-amber-500 active:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass"></i> تتبع حالتي
+                </button>
+                <button onclick="openMyBookingsModal()" class="bg-teal-600 active:bg-teal-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-calendar-check"></i> حجوزاتي
+                </button>
+            </div>
         </div>
     </header>
 
@@ -93,6 +108,28 @@
         </div>
     </div>
 
+    <!-- نافذة تتبع حالتي برقم التعريف -->
+    <div id="track-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 shadow-xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass text-amber-500"></i> تتبع حالة الحجز
+                </h3>
+                <button onclick="closeTrackModal()" class="text-slate-400 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">أدخل الرقم التعريفي للحجز (مثلاً 8906)</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="track-code-input" placeholder="مثال: 8906" class="flex-1 px-3 py-2 border rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-amber-500">
+                        <button onclick="trackBookingByCode()" class="bg-amber-500 text-white font-bold px-4 py-2 rounded-xl text-xs">استعلام</button>
+                    </div>
+                </div>
+                <div id="track-result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- نافذة حجوزاتي -->
     <div id="my-bookings-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 shadow-xl max-h-[90vh] overflow-y-auto">
@@ -109,23 +146,39 @@
         </div>
     </div>
 
-    <!-- نافذة الفاتورة -->
+    <!-- نافذة الفاتورة / الإيصال بحجم 80mm -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-4 shadow-xl">
-            <div id="invoice-content" class="p-3 border rounded-xl bg-slate-50 text-xs space-y-2">
-                <div class="text-center pb-2 border-b">
-                    <h2 id="inv-clinic" class="font-bold text-sm text-teal-800">عيادة سرت المركزية</h2>
-                    <p class="text-[10px] text-slate-400">تأكيد حجز موعد</p>
+        <div class="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl flex flex-col items-center">
+            
+            <!-- قالب الإيصال مصمم خصيصاً بمقياس 80mm -->
+            <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
+                <div class="flex flex-col items-center border-b pb-2 mb-2">
+                    <img id="inv-logo" src="" class="w-12 h-12 rounded-full object-cover border mb-1 hidden">
+                    <h2 id="inv-clinic" class="font-bold text-sm text-slate-900">عيادة سرت المركزية</h2>
+                    <p class="text-[10px] text-slate-500">إيصال حجز موعد طبي</p>
                 </div>
-                <p><strong>اسم المريض:</strong> <span id="inv-name"></span></p>
-                <p><strong>رقم الهاتف:</strong> <span id="inv-phone"></span></p>
-                <p><strong>القسم:</strong> <span id="inv-dept"></span></p>
-                <p><strong>الدكتور:</strong> <span id="inv-doctor"></span></p>
-                <p><strong>رقم العيادة:</strong> <span id="inv-room"></span></p>
-                <p><strong>رقم دورك:</strong> <span id="inv-queue" class="text-teal-600 font-bold text-sm"></span></p>
+                
+                <div class="bg-slate-100 p-2 rounded-md mb-2">
+                    <p class="text-[10px] text-slate-500">الرقم التعريفي للحجز</p>
+                    <p id="inv-code" class="text-lg font-black font-mono text-teal-700 tracking-wider">----</p>
+                </div>
+
+                <div class="text-right text-[11px] space-y-1.5 text-slate-800">
+                    <p><strong>اسم المريض:</strong> <span id="inv-name"></span></p>
+                    <p><strong>رقم الهاتف:</strong> <span id="inv-phone"></span></p>
+                    <p><strong>القسم:</strong> <span id="inv-dept"></span></p>
+                    <p><strong>الدكتور:</strong> <span id="inv-doctor"></span></p>
+                    <p><strong>رقم العيادة:</strong> <span id="inv-room"></span></p>
+                    <p class="pt-1 border-t"><strong>رقم دورك (الحالة):</strong> <span id="inv-queue" class="text-teal-700 font-bold text-xs"></span></p>
+                </div>
+
+                <div class="border-t border-dashed mt-3 pt-2 text-[9px] text-slate-400">
+                    <p>احتفظ بهذا الرقم لتتبع حالتك من التطبيق</p>
+                </div>
             </div>
-            <div class="flex gap-2 mt-3">
-                <button onclick="downloadPDF()" class="flex-1 bg-teal-600 text-white font-bold py-2 rounded-xl text-xs"><i class="fa-solid fa-download"></i> تنزيل PDF</button>
+
+            <div class="flex gap-2 w-full mt-3">
+                <button onclick="downloadPDF80mm()" class="flex-1 bg-teal-600 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1"><i class="fa-solid fa-print"></i> تنزيل (80mm)</button>
                 <button onclick="closeInvoiceModal()" class="px-4 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">إغلاق</button>
             </div>
         </div>
@@ -135,6 +188,8 @@
         const SUPABASE_URL = 'https://msfkzlgzrrwowzqswjeo.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_VrSSf2MML6_kII0uVt535w_kxtc62vQ';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let clinicLogoUrl = '';
 
         window.addEventListener('DOMContentLoaded', async () => {
             await loadSettings();
@@ -146,7 +201,10 @@
             if (data) {
                 document.getElementById('clinic-name').innerText = data.name || 'عيادة سرت المركزية';
                 document.getElementById('page-title').innerText = data.name || 'عيادة سرت المركزية';
-                if (data.logo) document.getElementById('clinic-logo').src = data.logo;
+                if (data.logo) {
+                    clinicLogoUrl = data.logo;
+                    document.getElementById('clinic-logo').src = data.logo;
+                }
             }
         }
 
@@ -243,6 +301,9 @@
             btn.disabled = true;
             btn.innerText = 'جاري التأكيد...';
 
+            // توليد رقم تعريفي مميز للحجز من 4 أرقام عشوائية (مثل 8906)
+            const trackCode = Math.floor(1000 + Math.random() * 9000);
+
             const newBooking = {
                 id: 'BK-' + Date.now(),
                 patient_name: document.getElementById('patient-name').value,
@@ -255,7 +316,8 @@
                 doctor_username: selectedDoctorData.username,
                 room_number: selectedDoctorData.room,
                 queue_number: selectedDoctorData.queueNumber,
-                status: 'قيد الانتظار'
+                status: 'قيد الانتظار',
+                track_code: trackCode
             };
 
             await db.from('bookings').insert([newBooking]);
@@ -267,12 +329,20 @@
         }
 
         function showInvoice(b) {
+            document.getElementById('inv-code').innerText = b.track_code || '8906';
             document.getElementById('inv-name').innerText = b.patient_name;
             document.getElementById('inv-phone').innerText = b.patient_phone;
             document.getElementById('inv-dept').innerText = b.department;
             document.getElementById('inv-doctor').innerText = b.doctor_name;
             document.getElementById('inv-room').innerText = b.room_number;
             document.getElementById('inv-queue').innerText = b.queue_number;
+
+            if (clinicLogoUrl) {
+                const img = document.getElementById('inv-logo');
+                img.src = clinicLogoUrl;
+                img.classList.remove('hidden');
+            }
+
             document.getElementById('invoice-modal').classList.remove('hidden');
         }
 
@@ -281,8 +351,65 @@
             selectDepartment(currentSelectedDept);
         }
 
-        function downloadPDF() {
-            html2pdf().from(document.getElementById('invoice-content')).save('Receipt.pdf');
+        // طباعة إيصال PDF متطابق مع طابعات الحراري 80mm
+        function downloadPDF80mm() {
+            const element = document.getElementById('invoice-content');
+            const opt = {
+                margin:       2,
+                filename:     `Receipt-${document.getElementById('inv-code').innerText}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: [80, 130], orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        /* نافذة تتبع حالتي بالرقم التعريفي */
+        function openTrackModal() {
+            document.getElementById('track-modal').classList.remove('hidden');
+        }
+
+        function closeTrackModal() {
+            document.getElementById('track-modal').classList.add('hidden');
+            document.getElementById('track-result').innerHTML = '';
+            document.getElementById('track-code-input').value = '';
+        }
+
+        async function trackBookingByCode() {
+            const codeInput = document.getElementById('track-code-input').value.trim();
+            const resultDiv = document.getElementById('track-result');
+
+            if (!codeInput) {
+                alert('يرجى كتابة الرقم التعريفي');
+                return;
+            }
+
+            resultDiv.innerHTML = `<p class="text-xs text-slate-400 text-center">جاري البحث...</p>`;
+
+            const { data: booking } = await db.from('bookings').select('*').eq('track_code', parseInt(codeInput)).single();
+
+            if (!booking) {
+                resultDiv.innerHTML = `<p class="text-xs text-rose-500 font-bold text-center">لم يتم العثور على حجز بهذا الرقم التعريفي!</p>`;
+                return;
+            }
+
+            // جلب معلومات الدكتور لمعرفة الحالة الواصل لها
+            const { data: doc } = await db.from('doctors').select('*').eq('username', booking.doctor_username).single();
+
+            const currentDoctorCase = doc ? (doc.current_case || 0) : 0;
+            const remaining = booking.queue_number - currentDoctorCase;
+
+            resultDiv.innerHTML = `
+                <div class="bg-teal-50 border border-teal-200 p-3 rounded-xl text-xs space-y-1.5 text-teal-900">
+                    <p class="font-bold text-sm text-teal-800">حالة الحجز: ${booking.status}</p>
+                    <p>👨‍⚕️ <strong>الدكتور:</strong> ${booking.doctor_name}</p>
+                    <p>🚪 <strong>رقم العيادة:</strong> ${booking.room_number}</p>
+                    <hr class="border-teal-200 my-1">
+                    <p>🔢 <strong>رقم دورك:</strong> <span class="font-bold text-teal-700 text-sm">${booking.queue_number}</span></p>
+                    <p>🎯 <strong>الدكتور واصل في الحالة رقم:</strong> <span class="font-bold text-amber-600 text-sm">${currentDoctorCase}</span></p>
+                    <p>⌛ <strong>الحالات المتبقية حتى دورك:</strong> ${remaining > 0 ? remaining : 'دورك الآن أو انتهى'}</p>
+                </div>
+            `;
         }
 
         function openMyBookingsModal() {
@@ -317,7 +444,7 @@
                 <div class="p-3 bg-slate-50 border rounded-xl flex justify-between items-center text-xs">
                     <div>
                         <p class="font-bold text-slate-800">${b.doctor_name}</p>
-                        <p class="text-slate-500">رقم الدور: <strong class="text-teal-600">${b.queue_number}</strong> | عيادة ${b.room_number}</p>
+                        <p class="text-slate-500">الرقم التعريفي: <strong class="text-teal-700 font-mono">${b.track_code || '---'}</strong> | الدور: ${b.queue_number}</p>
                     </div>
                     <button onclick="cancelBooking('${b.id}')" class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-lg font-bold">إلغاء</button>
                 </div>
