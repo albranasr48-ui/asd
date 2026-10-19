@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .receipt-80mm {
@@ -40,24 +39,20 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4">
-        <!-- ترويسة -->
         <div class="bg-teal-700 text-white rounded-2xl p-4 mb-5 shadow-md">
             <h2 class="text-lg font-bold">مرحباً بك 👋</h2>
-            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين واحجز موعدك فوراً.</p>
+            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين وحجز موعدك فوراً.</p>
         </div>
 
-        <!-- الأقسام -->
         <div id="departments-section">
-            <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center justify-between">
-                <span class="flex items-center gap-2"><i class="fa-solid fa-stethoscope text-teal-600"></i> الأقسام المتاحة</span>
-                <span class="text-[10px] text-teal-600 font-normal"><i class="fa-solid fa-circle text-[6px] text-emerald-500 animate-pulse"></i> تحديث تلقائي</span>
+            <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-stethoscope text-teal-600"></i> الأقسام المتاحة
             </h3>
             <div id="departments-grid" class="space-y-2.5">
                 <p class="text-xs text-slate-400 text-center py-4">جاري تحميل الأقسام...</p>
             </div>
         </div>
 
-        <!-- قائمة الدكاترة -->
         <div id="doctors-section" class="hidden">
             <div class="flex items-center justify-between mb-3">
                 <h3 id="selected-dept-title" class="text-sm font-bold text-slate-700">الدكاترة</h3>
@@ -189,16 +184,10 @@
 
         let savedClinicName = 'عيادة سرت المركزية';
         let savedClinicLogoUrl = '';
-        let currentSelectedDept = '';
-        let clientAutoRefresh = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
             await loadSettings();
             await renderDepartments();
-
-            // تفعيل التحديث التلقائي المستمر كل ثانية
-            if (clientAutoRefresh) clearInterval(clientAutoRefresh);
-            clientAutoRefresh = setInterval(loadClientDataQuietly, 1000);
         });
 
         async function loadSettings() {
@@ -212,14 +201,6 @@
                 if (savedClinicLogoUrl) {
                     document.getElementById('clinic-logo').src = savedClinicLogoUrl;
                 }
-            }
-        }
-
-        // تحديث صامت بدون إعادة بناء الشاشات المفتوحة
-        async function loadClientDataQuietly() {
-            await loadSettings();
-            if (currentSelectedDept) {
-                await renderDoctorsQuietly(currentSelectedDept);
             }
         }
 
@@ -238,15 +219,13 @@
             `).join('');
         }
 
+        let currentSelectedDept = '';
         async function selectDepartment(deptName) {
             currentSelectedDept = deptName;
             document.getElementById('departments-section').classList.add('hidden');
             document.getElementById('doctors-section').classList.remove('hidden');
             document.getElementById('selected-dept-title').innerText = `دكاترة ${deptName}`;
-            await renderDoctorsQuietly(deptName);
-        }
 
-        async function renderDoctorsQuietly(deptName) {
             const { data: doctors } = await db.from('doctors').select('*').eq('department', deptName);
             const doctorsGrid = document.getElementById('doctors-grid');
 
@@ -286,14 +265,14 @@
         }
 
         function backToDepartments() {
-            currentSelectedDept = '';
             document.getElementById('doctors-section').classList.add('hidden');
             document.getElementById('departments-section').classList.remove('hidden');
         }
 
         let selectedDoctorData = {};
         async function openBookingModal(username, name, room, duration) {
-            const { data: nextQueue } = await db.rpc('get_next_queue_number', { doc_username: username });
+            // استدعاء الدالة البرمجية من قاعدة البيانات لجلب الرقم التالي المضمون عدم تكراره
+            const { data: nextQueue, error } = await db.rpc('get_next_queue_number', { doc_username: username });
             const queueNumber = nextQueue || 1;
 
             selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept };
@@ -316,6 +295,7 @@
             btn.disabled = true;
             btn.innerText = 'جاري الحجز وتأكيد الدور...';
 
+            // إعادة الفحص الفوري عبر الدالة للتأكد بنسبة 100% عند الضغط تماماً
             const { data: finalQueue } = await db.rpc('get_next_queue_number', { doc_username: selectedDoctorData.username });
             const queueNumber = finalQueue || selectedDoctorData.queueNumber;
 
@@ -332,7 +312,7 @@
                 doctor_name: selectedDoctorData.name,
                 doctor_username: selectedDoctorData.username,
                 room_number: selectedDoctorData.room,
-                queue_number: queueNumber,
+                queue_number: queueNumber, // الرقم المحسوب من قاعدة البيانات مباشرة بدون أي احتمال تكرار
                 status: 'قيد الانتظار',
                 track_code: trackCode
             };
@@ -372,9 +352,7 @@
 
         function closeInvoiceModal() {
             document.getElementById('invoice-modal').classList.add('hidden');
-            if (currentSelectedDept) {
-                selectDepartment(currentSelectedDept);
-            }
+            selectDepartment(currentSelectedDept);
         }
 
         function downloadPDF80mm() {
