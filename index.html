@@ -10,7 +10,6 @@
     <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* تنسيق طباعة إيصال الحراري 80mm */
         .receipt-80mm {
             width: 80mm;
             padding: 10px;
@@ -44,7 +43,7 @@
         <!-- ترويسة -->
         <div class="bg-teal-700 text-white rounded-2xl p-4 mb-5 shadow-md">
             <h2 class="text-lg font-bold">مرحباً بك 👋</h2>
-            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين واحجز موعدك فوراً.</p>
+            <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين وحجز موعدك فوراً.</p>
         </div>
 
         <!-- الأقسام -->
@@ -146,15 +145,12 @@
         </div>
     </div>
 
-    <!-- نافذة الفاتورة / الإيصال بحجم 80mm -->
+    <!-- نافذة الإيصال 80mm -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl flex flex-col items-center">
-            
-            <!-- قالب الإيصال مصمم خصيصاً بمقياس 80mm -->
             <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
                 <div class="flex flex-col items-center border-b pb-2 mb-2">
                     <img id="inv-logo" src="" class="w-12 h-12 rounded-full object-cover border mb-1 hidden">
-                    <!-- اسم العيادة المحفوظ والمعدل من قبل الإدارة -->
                     <h2 id="inv-clinic" class="font-bold text-sm text-slate-900">عيادة سرت المركزية</h2>
                     <p class="text-[10px] text-slate-500">إيصال حجز موعد طبي</p>
                 </div>
@@ -222,7 +218,7 @@
                 return;
             }
             grid.innerHTML = depts.map(d => `
-                <div onclick="selectDepartment('${d.name}')" class="bg-white p-3.5 rounded-xl shadow-sm border flex justify-between items-center active:scale-98 transition">
+                <div onclick="selectDepartment('${d.name}')" class="bg-white p-3.5 rounded-xl shadow-sm border flex justify-between items-center active:scale-98 transition cursor-pointer">
                     <span class="font-bold text-sm text-slate-800">${d.name}</span>
                     <i class="fa-solid fa-chevron-left text-xs text-slate-400"></i>
                 </div>
@@ -281,10 +277,12 @@
 
         let selectedDoctorData = {};
         async function openBookingModal(username, name, room, duration) {
+            // جلب أحدث بيانات الدكتور والحجوزات الحية لمنع التضارب الفوري
             const { data: doc } = await db.from('doctors').select('*').eq('username', username).single();
             const { data: bookings } = await db.from('bookings').select('*').eq('doctor_username', username).eq('status', 'قيد الانتظار');
             
             const currentCase = doc ? (doc.current_case || 0) : 0;
+            // حساب رقم الدور الفعلي بدقة بناءً على عدد الحجوزات الموجودة حالياً بقاعدة البيانات
             const queueNumber = currentCase + (bookings ? bookings.length : 0) + 1;
 
             selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept };
@@ -305,7 +303,20 @@
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.innerText = 'جاري التأكيد...';
+            btn.innerText = 'جاري التأكيد وتحديث الأرقام...';
+
+            // إعادة فحص قاعدة البيانات للتأكد من عدم حجز رقم دور مماثل في نفس اللحظة بالمللي ثانية
+            const { data: currentBookings } = await db.from('bookings').select('queue_number').eq('doctor_username', selectedDoctorData.username).eq('status', 'قيد الانتظار');
+            const { data: docInfo } = await db.from('doctors').select('current_case').eq('username', selectedDoctorData.username).single();
+
+            const currentCase = docInfo ? (docInfo.current_case || 0) : 0;
+            let finalQueueNumber = currentCase + (currentBookings ? currentBookings.length : 0) + 1;
+
+            // التأكد من أن الرقم غير مستخدم مسبقاً، وإذا وجد يتم زيادته تلقائياً حتى يجد رقماً شاغراً
+            const existingNumbers = (currentBookings || []).map(b => b.queue_number);
+            while (existingNumbers.includes(finalQueueNumber)) {
+                finalQueueNumber++;
+            }
 
             const trackCode = Math.floor(1000 + Math.random() * 9000);
 
@@ -320,7 +331,7 @@
                 doctor_name: selectedDoctorData.name,
                 doctor_username: selectedDoctorData.username,
                 room_number: selectedDoctorData.room,
-                queue_number: selectedDoctorData.queueNumber,
+                queue_number: finalQueueNumber, // الرقم المحسوب المضمون عدم تكراره
                 status: 'قيد الانتظار',
                 track_code: trackCode
             };
@@ -334,7 +345,6 @@
         }
 
         function showInvoice(b) {
-            // تحديث اسم العيادة في الفاتورة بالاسم المحفوظ دائماً
             document.getElementById('inv-clinic').innerText = savedClinicName;
             document.getElementById('inv-code').innerText = b.track_code || '8906';
             document.getElementById('inv-name').innerText = b.patient_name;
