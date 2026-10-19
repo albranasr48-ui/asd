@@ -20,70 +20,73 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
-    <!-- تسجيل الدخول -->
+    <!-- شاشة تسجيل الدخول -->
     <div id="doctor-login-screen" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl">
             <h2 class="text-base font-bold text-slate-800 mb-3 text-center">دخول الدكتور</h2>
             <form onsubmit="handleDoctorLogin(event)" class="space-y-3">
-                <input type="text" id="doc-login-user" required placeholder="اسم المستخدم" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
-                <input type="password" id="doc-login-pass" required placeholder="كلمة المرور" class="w-full px-3 py-2 border rounded-xl text-sm outline-none">
-                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-xl text-sm">دخول</button>
+                <input type="text" id="doc-login-user" required placeholder="اسم المستخدم" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500">
+                <input type="password" id="doc-login-pass" required placeholder="كلمة المرور" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500">
+                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 rounded-xl text-sm shadow">دخول</button>
             </form>
         </div>
     </div>
 
     <!-- الشاشة الرئيسية -->
     <div id="doctor-dashboard" class="hidden max-w-md mx-auto px-4 pt-4 space-y-4">
-        <div class="flex justify-between items-center bg-white p-3 rounded-xl border">
+        <div class="flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
             <div>
                 <h1 id="doc-welcome-name" class="font-bold text-sm text-teal-800">أهلاً دكتور</h1>
                 <p id="doc-dept-label" class="text-[10px] text-slate-400"></p>
             </div>
-            <button onclick="logoutDoctor()" class="text-rose-600 text-xs font-bold">خروج</button>
+            <button onclick="logoutDoctor()" class="text-rose-600 text-xs font-bold bg-rose-50 px-2.5 py-1 rounded-lg">خروج</button>
         </div>
 
         <!-- إعدادات التواجد والعيادة -->
-        <section class="bg-white p-4 rounded-xl border space-y-2 text-xs">
-            <h3 class="font-bold text-slate-700">تحديث الحالة</h3>
+        <section class="bg-white p-4 rounded-xl border space-y-2 text-xs shadow-sm">
+            <h3 class="font-bold text-slate-700">تحديث الحالة والعيادة</h3>
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-1">التواجد</label>
-                    <select id="doc-presence" class="w-full px-2 py-1.5 border rounded-lg">
+                    <select id="doc-presence" class="w-full px-2 py-1.5 border rounded-lg outline-none">
                         <option value="true">موجود</option>
                         <option value="false">غير موجود</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-1">رقم العيادة</label>
-                    <input type="text" id="doc-room" class="w-full px-2 py-1.5 border rounded-lg">
+                    <input type="text" id="doc-room" class="w-full px-2 py-1.5 border rounded-lg outline-none">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-1">مدة الحالة (دقائق)</label>
-                    <input type="number" id="doc-duration" class="w-full px-2 py-1.5 border rounded-lg" value="20">
+                    <input type="number" id="doc-duration" class="w-full px-2 py-1.5 border rounded-lg outline-none" value="20">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-1">الحالة الواصل لها</label>
-                    <input type="number" id="doc-current-case" class="w-full px-2 py-1.5 border rounded-lg" value="0">
+                    <input type="number" id="doc-current-case" class="w-full px-2 py-1.5 border rounded-lg outline-none" value="0">
                 </div>
             </div>
-            <button onclick="updateDoctorStatus()" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg mt-2">حفظ التغييرات</button>
+            <button onclick="updateDoctorStatus()" class="w-full bg-teal-600 text-white font-bold py-2 rounded-lg mt-2 shadow-sm">حفظ التغييرات</button>
         </section>
 
         <!-- قائمة الحالات -->
-        <section class="bg-white p-4 rounded-xl border space-y-3">
-            <h3 class="text-xs font-bold text-slate-700">الحالات قيد الانتظار</h3>
+        <section class="bg-white p-4 rounded-xl border space-y-3 shadow-sm">
+            <h3 class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>الحالات قيد الانتظار</span>
+                <span class="text-[10px] text-teal-600 font-normal"><i class="fa-solid fa-circle text-[6px] text-emerald-500 animate-pulse"></i> محدث محلياً</span>
+            </h3>
             <div id="doc-pending-cases" class="space-y-2"></div>
         </section>
 
-        <section class="bg-white p-4 rounded-xl border space-y-3">
+        <section class="bg-white p-4 rounded-xl border space-y-3 shadow-sm">
             <h3 class="text-xs font-bold text-slate-700">الحالات المكتملة</h3>
             <div id="doc-completed-cases" class="space-y-2"></div>
         </section>
     </div>
 
-    <!-- نافذة عرض الإيصال والتنزيل -->
+    <!-- نافذة عرض الإيصال والتنزيل (80mm) -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl flex flex-col items-center">
             <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
@@ -145,7 +148,7 @@
 
                 await loadDoctorData();
                 
-                // تفعيل التحديث التلقائي كل ثانية
+                // تفعيل التحديث التلقائي المستمر كل ثانية
                 if (autoRefreshInterval) clearInterval(autoRefreshInterval);
                 autoRefreshInterval = setInterval(loadDoctorDataQuietly, 1000);
             } else {
@@ -174,7 +177,7 @@
             }
         }
 
-        // تحديث صامت في الخلفية بدون إعادة تعيين حقول الإدخال إذا كان الدكتور يكتب فيها
+        // تحديث القوائم في الخلفية بشكل صامت كل ثانية
         async function loadDoctorDataQuietly() {
             if (!currentDoctorUsername) return;
             await renderDoctorCases();
