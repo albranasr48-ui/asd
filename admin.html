@@ -208,7 +208,7 @@
         </main>
     </div>
 
-    <!-- نافذة عرض الإيصال في الإدارة -->
+    <!-- نافذة عرض الإيصال -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl flex flex-col items-center">
             <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
@@ -247,7 +247,7 @@
 
         let uploadedLogoBase64 = '';
         let clinicName = 'عيادة سرت المركزية';
-        let adminAutoRefresh = null;
+        let refreshTimer = null;
 
         async function handleAdminLogin(e) {
             e.preventDefault();
@@ -256,15 +256,16 @@
                 document.getElementById('admin-dashboard').classList.remove('hidden');
                 await loadAdminData();
 
-                if (adminAutoRefresh) clearInterval(adminAutoRefresh);
-                adminAutoRefresh = setInterval(refreshAdminQuietly, 1000);
+                // التحديث التلقائي الفوري كل ثانية واحدة (تحديث ذاتي مدمج بالكامل)
+                if (refreshTimer) clearInterval(refreshTimer);
+                refreshTimer = setInterval(loadAdminDataQuietly, 1000);
             } else {
                 alert('كلمة المرور غير صحيحة');
             }
         }
 
         function logoutAdmin() {
-            if (adminAutoRefresh) clearInterval(adminAutoRefresh);
+            if (refreshTimer) clearInterval(refreshTimer);
             document.getElementById('admin-dashboard').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
         }
@@ -302,7 +303,8 @@
             await renderAdminCases();
         }
 
-        async function refreshAdminQuietly() {
+        // تحديث البيانات في الخلفية بهدوء كل ثانية بدون إزعاج
+        async function loadAdminDataQuietly() {
             await renderAdminDepartments();
             await renderAdminDoctors();
             await renderAdminCases();
