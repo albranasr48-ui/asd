@@ -154,6 +154,7 @@
             <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
                 <div class="flex flex-col items-center border-b pb-2 mb-2">
                     <img id="inv-logo" src="" class="w-12 h-12 rounded-full object-cover border mb-1 hidden">
+                    <!-- اسم العيادة المحفوظ والمعدل من قبل الإدارة -->
                     <h2 id="inv-clinic" class="font-bold text-sm text-slate-900">عيادة سرت المركزية</h2>
                     <p class="text-[10px] text-slate-500">إيصال حجز موعد طبي</p>
                 </div>
@@ -189,7 +190,8 @@
         const SUPABASE_KEY = 'sb_publishable_VrSSf2MML6_kII0uVt535w_kxtc62vQ';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let clinicLogoUrl = '';
+        let savedClinicName = 'عيادة سرت المركزية';
+        let savedClinicLogoUrl = '';
 
         window.addEventListener('DOMContentLoaded', async () => {
             await loadSettings();
@@ -199,11 +201,15 @@
         async function loadSettings() {
             const { data } = await db.from('settings').select('*').single();
             if (data) {
-                document.getElementById('clinic-name').innerText = data.name || 'عيادة سرت المركزية';
-                document.getElementById('page-title').innerText = data.name || 'عيادة سرت المركزية';
-                if (data.logo) {
-                    clinicLogoUrl = data.logo;
-                    document.getElementById('clinic-logo').src = data.logo;
+                savedClinicName = data.name || 'عيادة سرت المركزية';
+                savedClinicLogoUrl = data.logo || '';
+
+                document.getElementById('clinic-name').innerText = savedClinicName;
+                document.getElementById('page-title').innerText = savedClinicName;
+                document.getElementById('inv-clinic').innerText = savedClinicName;
+
+                if (savedClinicLogoUrl) {
+                    document.getElementById('clinic-logo').src = savedClinicLogoUrl;
                 }
             }
         }
@@ -301,7 +307,6 @@
             btn.disabled = true;
             btn.innerText = 'جاري التأكيد...';
 
-            // توليد رقم تعريفي مميز للحجز من 4 أرقام عشوائية (مثل 8906)
             const trackCode = Math.floor(1000 + Math.random() * 9000);
 
             const newBooking = {
@@ -329,6 +334,8 @@
         }
 
         function showInvoice(b) {
+            // تحديث اسم العيادة في الفاتورة بالاسم المحفوظ دائماً
+            document.getElementById('inv-clinic').innerText = savedClinicName;
             document.getElementById('inv-code').innerText = b.track_code || '8906';
             document.getElementById('inv-name').innerText = b.patient_name;
             document.getElementById('inv-phone').innerText = b.patient_phone;
@@ -337,9 +344,9 @@
             document.getElementById('inv-room').innerText = b.room_number;
             document.getElementById('inv-queue').innerText = b.queue_number;
 
-            if (clinicLogoUrl) {
+            if (savedClinicLogoUrl) {
                 const img = document.getElementById('inv-logo');
-                img.src = clinicLogoUrl;
+                img.src = savedClinicLogoUrl;
                 img.classList.remove('hidden');
             }
 
@@ -351,7 +358,6 @@
             selectDepartment(currentSelectedDept);
         }
 
-        // طباعة إيصال PDF متطابق مع طابعات الحراري 80mm
         function downloadPDF80mm() {
             const element = document.getElementById('invoice-content');
             const opt = {
@@ -364,7 +370,6 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        /* نافذة تتبع حالتي بالرقم التعريفي */
         function openTrackModal() {
             document.getElementById('track-modal').classList.remove('hidden');
         }
@@ -393,7 +398,6 @@
                 return;
             }
 
-            // جلب معلومات الدكتور لمعرفة الحالة الواصل لها
             const { data: doc } = await db.from('doctors').select('*').eq('username', booking.doctor_username).single();
 
             const currentDoctorCase = doc ? (doc.current_case || 0) : 0;
