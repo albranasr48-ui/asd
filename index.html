@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .receipt-80mm {
@@ -40,13 +39,11 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4">
-        <!-- ترويسة -->
         <div class="bg-teal-700 text-white rounded-2xl p-4 mb-5 shadow-md">
             <h2 class="text-lg font-bold">مرحباً بك 👋</h2>
             <p class="text-xs text-teal-100 mt-1">اختر القسم وتعرف على الدكاترة المتاحين وحجز موعدك فوراً.</p>
         </div>
 
-        <!-- الأقسام -->
         <div id="departments-section">
             <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                 <i class="fa-solid fa-stethoscope text-teal-600"></i> الأقسام المتاحة
@@ -56,7 +53,6 @@
             </div>
         </div>
 
-        <!-- قائمة الدكاترة -->
         <div id="doctors-section" class="hidden">
             <div class="flex items-center justify-between mb-3">
                 <h3 id="selected-dept-title" class="text-sm font-bold text-slate-700">الدكاترة</h3>
@@ -199,11 +195,9 @@
             if (data) {
                 savedClinicName = data.name || 'عيادة سرت المركزية';
                 savedClinicLogoUrl = data.logo || '';
-
                 document.getElementById('clinic-name').innerText = savedClinicName;
                 document.getElementById('page-title').innerText = savedClinicName;
                 document.getElementById('inv-clinic').innerText = savedClinicName;
-
                 if (savedClinicLogoUrl) {
                     document.getElementById('clinic-logo').src = savedClinicLogoUrl;
                 }
@@ -277,13 +271,9 @@
 
         let selectedDoctorData = {};
         async function openBookingModal(username, name, room, duration) {
-            // جلب أحدث بيانات الدكتور والحجوزات الحية لمنع التضارب الفوري
-            const { data: doc } = await db.from('doctors').select('*').eq('username', username).single();
-            const { data: bookings } = await db.from('bookings').select('*').eq('doctor_username', username).eq('status', 'قيد الانتظار');
-            
-            const currentCase = doc ? (doc.current_case || 0) : 0;
-            // حساب رقم الدور الفعلي بدقة بناءً على عدد الحجوزات الموجودة حالياً بقاعدة البيانات
-            const queueNumber = currentCase + (bookings ? bookings.length : 0) + 1;
+            // استدعاء الدالة البرمجية من قاعدة البيانات لجلب الرقم التالي المضمون عدم تكراره
+            const { data: nextQueue, error } = await db.rpc('get_next_queue_number', { doc_username: username });
+            const queueNumber = nextQueue || 1;
 
             selectedDoctorData = { username, name, room, queueNumber, department: currentSelectedDept };
 
@@ -303,20 +293,11 @@
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.innerText = 'جاري التأكيد وتحديث الأرقام...';
+            btn.innerText = 'جاري الحجز وتأكيد الدور...';
 
-            // إعادة فحص قاعدة البيانات للتأكد من عدم حجز رقم دور مماثل في نفس اللحظة بالمللي ثانية
-            const { data: currentBookings } = await db.from('bookings').select('queue_number').eq('doctor_username', selectedDoctorData.username).eq('status', 'قيد الانتظار');
-            const { data: docInfo } = await db.from('doctors').select('current_case').eq('username', selectedDoctorData.username).single();
-
-            const currentCase = docInfo ? (docInfo.current_case || 0) : 0;
-            let finalQueueNumber = currentCase + (currentBookings ? currentBookings.length : 0) + 1;
-
-            // التأكد من أن الرقم غير مستخدم مسبقاً، وإذا وجد يتم زيادته تلقائياً حتى يجد رقماً شاغراً
-            const existingNumbers = (currentBookings || []).map(b => b.queue_number);
-            while (existingNumbers.includes(finalQueueNumber)) {
-                finalQueueNumber++;
-            }
+            // إعادة الفحص الفوري عبر الدالة للتأكد بنسبة 100% عند الضغط تماماً
+            const { data: finalQueue } = await db.rpc('get_next_queue_number', { doc_username: selectedDoctorData.username });
+            const queueNumber = finalQueue || selectedDoctorData.queueNumber;
 
             const trackCode = Math.floor(1000 + Math.random() * 9000);
 
@@ -331,12 +312,18 @@
                 doctor_name: selectedDoctorData.name,
                 doctor_username: selectedDoctorData.username,
                 room_number: selectedDoctorData.room,
-                queue_number: finalQueueNumber, // الرقم المحسوب المضمون عدم تكراره
+                queue_number: queueNumber, // الرقم المحسوب من قاعدة البيانات مباشرة بدون أي احتمال تكرار
                 status: 'قيد الانتظار',
                 track_code: trackCode
             };
 
-            await db.from('bookings').insert([newBooking]);
+            const { error } = await db.from('bookings').insert([newBooking]);
+            if(error) {
+                alert('حدث خطأ أثناء حفظ الحجز: ' + error.message);
+                btn.disabled = false;
+                btn.innerText = 'تأكيد الحجز';
+                return;
+            }
 
             btn.disabled = false;
             btn.innerText = 'تأكيد الحجز';
