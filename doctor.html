@@ -20,7 +20,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-6">
 
-    <!-- شاشة تسجيل الدخول -->
+    <!-- تسجيل الدخول -->
     <div id="doctor-login-screen" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl">
             <h2 class="text-base font-bold text-slate-800 mb-3 text-center">دخول الدكتور</h2>
@@ -75,7 +75,7 @@
         <section class="bg-white p-4 rounded-xl border space-y-3 shadow-sm">
             <h3 class="text-xs font-bold text-slate-700 flex items-center justify-between">
                 <span>الحالات قيد الانتظار</span>
-                <span class="text-[10px] text-teal-600 font-normal"><i class="fa-solid fa-circle text-[6px] text-emerald-500 animate-pulse"></i> محدث محلياً</span>
+                <span class="text-[10px] text-teal-600 font-normal"><i class="fa-solid fa-circle text-[6px] text-emerald-500 animate-pulse"></i> محدث</span>
             </h3>
             <div id="doc-pending-cases" class="space-y-2"></div>
         </section>
@@ -86,7 +86,7 @@
         </section>
     </div>
 
-    <!-- نافذة عرض الإيصال والتنزيل (80mm) -->
+    <!-- نافذة عرض الإيصال والتنزيل (80mm) - مع الملاحظات -->
     <div id="invoice-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-4 shadow-xl flex flex-col items-center">
             <div id="invoice-content" class="receipt-80mm border border-dashed border-slate-300 rounded-lg text-center">
@@ -107,6 +107,7 @@
                     <p><strong>القسم:</strong> <span id="inv-dept"></span></p>
                     <p><strong>الدكتور:</strong> <span id="inv-doctor"></span></p>
                     <p><strong>رقم العيادة:</strong> <span id="inv-room"></span></p>
+                    <p><strong>ملاحظات:</strong> <span id="inv-notes" class="text-slate-600">لا توجد ملاحظات</span></p>
                     <p class="pt-1 border-t"><strong>رقم دورك (الحالة):</strong> <span id="inv-queue" class="text-teal-700 font-bold text-xs"></span></p>
                 </div>
             </div>
@@ -148,7 +149,6 @@
 
                 await loadDoctorData();
                 
-                // تفعيل التحديث التلقائي المستمر كل ثانية
                 if (autoRefreshInterval) clearInterval(autoRefreshInterval);
                 autoRefreshInterval = setInterval(loadDoctorDataQuietly, 1000);
             } else {
@@ -177,7 +177,6 @@
             }
         }
 
-        // تحديث القوائم في الخلفية بشكل صامت كل ثانية
         async function loadDoctorDataQuietly() {
             if (!currentDoctorUsername) return;
             await renderDoctorCases();
@@ -206,7 +205,7 @@
                 <div class="p-2.5 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
                     <div>
                         <p class="font-bold">${b.patient_name} <span class="text-teal-600">(دور: ${b.queue_number})</span></p>
-                        <p class="text-[10px] text-slate-400">هاتف: ${b.patient_phone} | رمز: ${b.track_code || '---'}</p>
+                        <p class="text-[10px] text-slate-400">هاتف: ${b.patient_phone} | ملاحظة: ${b.notes ? b.notes : 'لا توجد'}</p>
                     </div>
                     <div class="flex gap-1">
                         <button onclick='showInvoice(${JSON.stringify(b)})' class="bg-amber-500 text-white font-bold px-2 py-1 rounded-md text-[10px]">إيصال</button>
@@ -219,7 +218,7 @@
                 <div class="p-2.5 bg-slate-50 border rounded-lg text-xs flex justify-between items-center">
                     <div>
                         <p class="font-bold">${b.patient_name}</p>
-                        <p class="text-[10px] text-slate-400">رقم الدور: ${b.queue_number} | رمز: ${b.track_code || '---'}</p>
+                        <p class="text-[10px] text-slate-400">رقم الدور: ${b.queue_number} | ملاحظة: ${b.notes ? b.notes : 'لا توجد'}</p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button onclick='showInvoice(${JSON.stringify(b)})' class="bg-slate-200 text-slate-700 font-bold px-2 py-1 rounded-md text-[10px]">عرض الإيصال</button>
@@ -242,6 +241,7 @@
             document.getElementById('inv-dept').innerText = b.department;
             document.getElementById('inv-doctor').innerText = b.doctor_name;
             document.getElementById('inv-room').innerText = b.room_number;
+            document.getElementById('inv-notes').innerText = b.notes || 'لا توجد ملاحظات';
             document.getElementById('inv-queue').innerText = b.queue_number;
 
             if (clinicLogo) {
